@@ -8,32 +8,39 @@ interface FilterGroup {
 
 const filterGroups: FilterGroup[] = [
   {
-    label: "Country",
+    label: "País",
     options: [
-      { name: "United States", count: 42 },
-      { name: "Mexico", count: 26 },
-      { name: "Canada", count: 18 },
-      { name: "Brazil", count: 12 },
-      { name: "United Kingdom", count: 8 },
+      { name: "Colombia", count: 34 },
+      { name: "Ecuador", count: 8 },
+      { name: "Estados Unidos", count: 5 },
     ],
   },
   {
-    label: "Department",
+    label: "Departamento",
     options: [
-      { name: "Engineering", count: 31 },
-      { name: "Marketing", count: 15 },
-      { name: "Operations", count: 22 },
-      { name: "Finance", count: 9 },
-      { name: "Human Resources", count: 7 },
+      { name: "Quindío", count: 18 },
+      { name: "Bogotá D.C.", count: 12 },
+      { name: "Valle del Cauca", count: 7 },
+      { name: "Antioquia", count: 5 },
     ],
   },
   {
-    label: "Job Type",
+    label: "Área",
     options: [
-      { name: "Full-Time", count: 78 },
-      { name: "Part-Time", count: 12 },
-      { name: "Contract", count: 6 },
-      { name: "Internship", count: 10 },
+      { name: "Producción", count: 14 },
+      { name: "Tiendas", count: 11 },
+      { name: "Logística", count: 8 },
+      { name: "Marketing", count: 6 },
+      { name: "Administración", count: 5 },
+      { name: "Recursos Humanos", count: 3 },
+    ],
+  },
+  {
+    label: "Tipo de Contrato",
+    options: [
+      { name: "Término Indefinido", count: 32 },
+      { name: "Término Fijo", count: 10 },
+      { name: "Practicante", count: 5 },
     ],
   },
 ];
@@ -58,10 +65,10 @@ const FiltersPanel = ({ selectedFilters, onFilterChange, onReset }: FiltersPanel
   return (
     <aside className="bg-filter-bg rounded-lg border border-border p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-heading font-bold text-lg text-foreground">Filters</h2>
+        <h2 className="font-heading font-bold text-lg text-foreground">Filtros</h2>
         {hasFilters && (
           <button onClick={onReset} className="text-sm text-primary hover:underline font-medium">
-            Reset
+            Limpiar
           </button>
         )}
       </div>
