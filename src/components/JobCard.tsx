@@ -1,18 +1,13 @@
 import { MapPin, Calendar, Briefcase } from "lucide-react";
-
-export interface Job {
-  id: number;
-  title: string;
-  location: string;
-  department: string;
-  area: string;
-  type: string;
-  date: string;
-}
+import { Link } from "react-router-dom";
+import type { Job } from "@/data/jobs";
 
 const JobCard = ({ job }: { job: Job }) => {
   return (
-    <div className="bg-card border border-border rounded-lg px-5 py-4 hover:bg-job-hover hover:border-primary/30 transition-all cursor-pointer group">
+    <Link
+      to={`/vacante/${job.id}`}
+      className="block bg-card border border-border rounded-lg px-5 py-4 hover:bg-job-hover hover:border-primary/30 transition-all cursor-pointer group"
+    >
       <h3 className="text-base font-semibold text-job-link group-hover:underline mb-1.5">
         {job.title}
       </h3>
@@ -30,7 +25,7 @@ const JobCard = ({ job }: { job: Job }) => {
           {job.date}
         </span>
       </div>
-    </div>
+    </Link>
   );
 };
 
