@@ -1,5 +1,6 @@
 import JobCard from "./JobCard";
 import { allJobs } from "@/data/jobs";
+import { SearchX } from "lucide-react";
 
 interface JobListProps {
   keyword: string;
@@ -21,16 +22,20 @@ const JobList = ({ keyword, location, filters }: JobListProps) => {
 
   return (
     <div>
-      <h2 className="font-heading font-bold text-xl text-foreground mb-4">
-        Vacantes Disponibles
-        <span className="text-sm font-normal text-muted-foreground ml-2">
-          ({filtered.length} {filtered.length === 1 ? "posición" : "posiciones"})
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="font-heading font-bold text-base uppercase tracking-brand text-foreground">
+          Vacantes Disponibles
+        </h2>
+        <span className="text-xs font-body text-muted-foreground bg-muted px-3 py-1 rounded-full">
+          {filtered.length} {filtered.length === 1 ? "posición" : "posiciones"}
         </span>
-      </h2>
+      </div>
+
       {filtered.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg font-medium">No se encontraron vacantes</p>
-          <p className="text-sm mt-1">Intenta ajustar tu búsqueda o filtros</p>
+        <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-lg">
+          <SearchX className="h-10 w-10 mx-auto mb-3 text-primary/30" />
+          <p className="text-sm font-heading font-bold uppercase tracking-brand">No se encontraron vacantes</p>
+          <p className="text-xs mt-1 font-body">Intenta ajustar tu búsqueda o filtros</p>
         </div>
       ) : (
         <div className="space-y-3">
