@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        heading: ['Plus Jakarta Sans', 'sans-serif'],
+        body: ['DM Sans', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -47,6 +51,11 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "hero-overlay": "hsl(var(--hero-overlay))",
+        "hero-text": "hsl(var(--hero-text))",
+        "filter-bg": "hsl(var(--filter-bg))",
+        "job-hover": "hsl(var(--job-hover))",
+        "job-link": "hsl(var(--job-link))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
