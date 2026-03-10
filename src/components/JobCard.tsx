@@ -4,8 +4,8 @@ export interface Job {
   id: number;
   title: string;
   location: string;
-  country: string;
   department: string;
+  area: string;
   type: string;
   date: string;
 }
@@ -19,11 +19,11 @@ const JobCard = ({ job }: { job: Job }) => {
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
         <span className="flex items-center gap-1">
           <MapPin className="h-3.5 w-3.5" />
-          {job.location}, {job.country}
+          {job.location}, {job.department}
         </span>
         <span className="flex items-center gap-1">
           <Briefcase className="h-3.5 w-3.5" />
-          {job.department}
+          {job.area}
         </span>
         <span className="flex items-center gap-1">
           <Calendar className="h-3.5 w-3.5" />
