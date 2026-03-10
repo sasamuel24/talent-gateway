@@ -1,22 +1,5 @@
-import JobCard, { type Job } from "./JobCard";
-
-const allJobs: Job[] = [
-  { id: 1, title: "Barista – Tienda Parque del Café", location: "Montenegro", department: "Quindío", area: "Tiendas", type: "Término Indefinido", date: "08/03/2026" },
-  { id: 2, title: "Coordinador de Producción", location: "Armenia", department: "Quindío", area: "Producción", type: "Término Indefinido", date: "06/03/2026" },
-  { id: 3, title: "Analista de Marketing Digital", location: "Bogotá", department: "Bogotá D.C.", area: "Marketing", type: "Término Indefinido", date: "05/03/2026" },
-  { id: 4, title: "Supervisor de Logística", location: "Cali", department: "Valle del Cauca", area: "Logística", type: "Término Indefinido", date: "04/03/2026" },
-  { id: 5, title: "Ingeniero de Procesos", location: "Armenia", department: "Quindío", area: "Producción", type: "Término Indefinido", date: "03/03/2026" },
-  { id: 6, title: "Auxiliar Administrativo", location: "Bogotá", department: "Bogotá D.C.", area: "Administración", type: "Término Fijo", date: "01/03/2026" },
-  { id: 7, title: "Practicante de Recursos Humanos", location: "Armenia", department: "Quindío", area: "Recursos Humanos", type: "Practicante", date: "28/02/2026" },
-  { id: 8, title: "Barista – Tienda Centro Comercial", location: "Medellín", department: "Antioquia", area: "Tiendas", type: "Término Indefinido", date: "26/02/2026" },
-  { id: 9, title: "Analista de Calidad", location: "Armenia", department: "Quindío", area: "Producción", type: "Término Indefinido", date: "24/02/2026" },
-  { id: 10, title: "Jefe de Tienda", location: "Bogotá", department: "Bogotá D.C.", area: "Tiendas", type: "Término Indefinido", date: "22/02/2026" },
-  { id: 11, title: "Conductor de Distribución", location: "Cali", department: "Valle del Cauca", area: "Logística", type: "Término Indefinido", date: "20/02/2026" },
-  { id: 12, title: "Community Manager", location: "Bogotá", department: "Bogotá D.C.", area: "Marketing", type: "Término Fijo", date: "18/02/2026" },
-  { id: 13, title: "Operario de Tostión", location: "Armenia", department: "Quindío", area: "Producción", type: "Término Indefinido", date: "15/02/2026" },
-  { id: 14, title: "Practicante de Logística", location: "Armenia", department: "Quindío", area: "Logística", type: "Practicante", date: "12/02/2026" },
-  { id: 15, title: "Ejecutivo Comercial", location: "Medellín", department: "Antioquia", area: "Administración", type: "Término Indefinido", date: "10/02/2026" },
-];
+import JobCard from "./JobCard";
+import { allJobs } from "@/data/jobs";
 
 interface JobListProps {
   keyword: string;
