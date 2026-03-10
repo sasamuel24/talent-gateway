@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import Navbar from "@/components/Navbar";
+
 import HeroSearch from "@/components/HeroSearch";
 import FiltersPanel from "@/components/FiltersPanel";
 import JobList from "@/components/JobList";
@@ -24,7 +24,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      
       <HeroSearch
         keyword={keyword}
         location={location}
