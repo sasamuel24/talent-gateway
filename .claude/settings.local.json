@@ -12,7 +12,10 @@
       "Bash(cd C:/desarollos/talent-gateway && npm run build 2>&1)",
       "Bash(cd C:/desarollos/talent-gateway && npx tsc --noEmit 2>&1; echo \"EXIT_CODE:$?\")",
       "Bash(cd C:/desarollos/talent-gateway && npm run build 2>&1; echo \"EXIT_CODE:$?\")",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git mv:*)"
     ]
   }
 }
