@@ -16,6 +16,7 @@ export interface AdminJob extends Job {
   candidatesCount: number;
   views: number;
   createdBy: string;
+  aiPrompt?: string; // criterios de IA específicos para esta convocatoria
 }
 
 export interface Candidate {
@@ -75,6 +76,8 @@ export const adminJobs: AdminJob[] = [
     candidatesCount: 24,
     views: 312,
     createdBy: "Valentina Ospina",
+    aiPrompt:
+      "Prioriza candidatos con experiencia mínima de 1 año en barismo o atención al cliente en cafeterías. El dominio de técnicas de extracción (espresso, V60, Chemex) es muy valorado. Descarta candidatos que no demuestren vocación de servicio o no tengan disponibilidad para turnos rotativos. El fit cultural con la marca CQ es clave: busca personas apasionadas por el café colombiano.",
   },
   {
     ...allJobs[1],
@@ -82,6 +85,8 @@ export const adminJobs: AdminJob[] = [
     candidatesCount: 11,
     views: 187,
     createdBy: "Juan Camilo Ríos",
+    aiPrompt:
+      "Candidato ideal: formación en ingeniería de alimentos, industrial o afines. Mínimo 3 años en plantas de producción de alimentos con manejo de BPM y HACCP. Valorar certificaciones en calidad (ISO, HACCP). Descarta perfiles sin experiencia en industria alimentaria.",
   },
   {
     ...allJobs[2],
@@ -89,6 +94,8 @@ export const adminJobs: AdminJob[] = [
     candidatesCount: 18,
     views: 245,
     createdBy: "Valentina Ospina",
+    aiPrompt:
+      "Busca comunicadores o publicistas con portafolio activo en redes sociales. Experiencia comprobable con Meta Business Suite y/o Google Analytics es excluyente. Valora conocimiento de tendencias en café y gastronomía. Descarta perfiles sin portafolio digital o sin conocimiento de métricas de contenido.",
   },
   {
     ...allJobs[3],
@@ -96,6 +103,8 @@ export const adminJobs: AdminJob[] = [
     candidatesCount: 9,
     views: 143,
     createdBy: "Andrés Felipe Giraldo",
+    aiPrompt:
+      "Perfil logístico con experiencia en coordinación de rutas y distribución urbana. Licencia de conducción vigente es requisito excluyente. Valorar manejo de WMS o sistemas de gestión de inventario. Descarta sin experiencia en distribución de perecederos o alimentos.",
   },
   {
     ...allJobs[4],
@@ -117,6 +126,8 @@ export const adminJobs: AdminJob[] = [
     candidatesCount: 31,
     views: 420,
     createdBy: "Andrés Felipe Giraldo",
+    aiPrompt:
+      "Practicante de último semestre en Psicología, Administración o RR.HH. Es obligatorio contar con aval universitario disponible. Valorar conocimiento básico de selección por competencias. Descarta candidatos que no estén en último semestre o no tengan aval de práctica disponible.",
   },
   {
     ...allJobs[7],
@@ -124,6 +135,8 @@ export const adminJobs: AdminJob[] = [
     candidatesCount: 16,
     views: 201,
     createdBy: "Valentina Ospina",
+    aiPrompt:
+      "Barista para tienda de alto tráfico. Mínimo 6 meses de experiencia en punto de venta de café. Habilidades de ventas y caja registradora son un plus. Prioriza candidatos con certificación en barismo o cursos de café. Actitud positiva y trabajo en equipo son indispensables.",
   },
   {
     ...allJobs[8],

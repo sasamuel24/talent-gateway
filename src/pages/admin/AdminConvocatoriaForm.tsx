@@ -1,13 +1,13 @@
 import { useEffect } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Trash2, ArrowLeft, Save, Send } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Save, Send, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -23,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { adminJobs } from "@/data/adminData";
@@ -31,25 +30,18 @@ import { adminJobs } from "@/data/adminData";
 const formSchema = z.object({
   title: z.string().min(5, "El título debe tener al menos 5 caracteres"),
   area: z.string().min(1, "Selecciona un área"),
-  department: z.string().min(1, "Selecciona un departamento"),
   location: z.string().min(2, "Ingresa la ciudad"),
   type: z.string().min(1, "Selecciona el tipo de contrato"),
   status: z.enum(["borrador", "activa"]),
   description: z
     .string()
-    .min(100, "La descripción debe tener al menos 100 caracteres"),
-  functions: z
-    .array(z.object({ value: z.string().min(5, "Mínimo 5 caracteres") }))
-    .min(1, "Agrega al menos una función"),
+    .min(50, "La descripción debe tener al menos 50 caracteres"),
   requirements: z
-    .array(z.object({ value: z.string().min(5, "Mínimo 5 caracteres") }))
+    .array(z.object({ value: z.string().min(3, "Mínimo 3 caracteres") }))
     .min(1, "Agrega al menos un requisito"),
-  idealCandidate: z.array(
-    z.object({
-      label: z.string().min(2, "Ingresa la etiqueta"),
-      text: z.string().min(5, "Ingresa la descripción"),
-    })
-  ),
+  aiPrompt: z
+    .string()
+    .min(20, "Describe los criterios para que la IA evalúe candidatos (mín. 20 caracteres)"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -68,22 +60,14 @@ export default function AdminConvocatoriaForm() {
     defaultValues: {
       title: "",
       area: "",
-      department: "",
       location: "",
       type: "",
       status: "borrador",
       description: "",
-      functions: [{ value: "" }],
       requirements: [{ value: "" }],
-      idealCandidate: [{ label: "", text: "" }],
+      aiPrompt: "",
     },
   });
-
-  const {
-    fields: functionFields,
-    append: appendFunction,
-    remove: removeFunction,
-  } = useFieldArray({ control: form.control, name: "functions" });
 
   const {
     fields: requirementFields,
@@ -91,25 +75,17 @@ export default function AdminConvocatoriaForm() {
     remove: removeRequirement,
   } = useFieldArray({ control: form.control, name: "requirements" });
 
-  const {
-    fields: candidateFields,
-    append: appendCandidate,
-    remove: removeCandidate,
-  } = useFieldArray({ control: form.control, name: "idealCandidate" });
-
   useEffect(() => {
     if (existingJob) {
       form.reset({
         title: existingJob.title,
         area: existingJob.area,
-        department: existingJob.department,
         location: existingJob.location,
         type: existingJob.type,
         status: existingJob.status === "cerrada" ? "borrador" : existingJob.status,
         description: existingJob.description,
-        functions: existingJob.functions.map((v) => ({ value: v })),
         requirements: existingJob.requirements.map((v) => ({ value: v })),
-        idealCandidate: existingJob.idealCandidate,
+        aiPrompt: existingJob.aiPrompt ?? "",
       });
     }
   }, [existingJob, form]);
@@ -118,9 +94,7 @@ export default function AdminConvocatoriaForm() {
     const finalStatus = saveAsDraft ? "borrador" : values.status;
     console.log("Guardar convocatoria:", { ...values, status: finalStatus });
     toast({
-      title: saveAsDraft
-        ? "Borrador guardado"
-        : "Convocatoria publicada",
+      title: saveAsDraft ? "Borrador guardado" : "Convocatoria publicada",
       description: saveAsDraft
         ? "Los cambios fueron guardados como borrador."
         : "La convocatoria fue publicada exitosamente.",
@@ -185,10 +159,7 @@ export default function AdminConvocatoriaForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Área</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccionar área" />
@@ -216,32 +187,13 @@ export default function AdminConvocatoriaForm() {
 
                   <FormField
                     control={form.control}
-                    name="department"
+                    name="location"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Departamento</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar departamento" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {[
-                              "Quindío",
-                              "Bogotá D.C.",
-                              "Valle del Cauca",
-                              "Antioquia",
-                            ].map((d) => (
-                              <SelectItem key={d} value={d}>
-                                {d}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Ciudad</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ej: Armenia, Quindío" {...field} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -251,28 +203,11 @@ export default function AdminConvocatoriaForm() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ciudad</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ej: Armenia" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
                     name="type"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Tipo de contrato</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccionar tipo" />
@@ -294,43 +229,40 @@ export default function AdminConvocatoriaForm() {
                       </FormItem>
                     )}
                   />
-                </div>
 
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estado inicial</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full sm:w-48">
-                            <SelectValue placeholder="Estado" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="borrador">Borrador</SelectItem>
-                          <SelectItem value="activa">Activa</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estado inicial</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Estado" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="borrador">Borrador</SelectItem>
+                            <SelectItem value="activa">Activa</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </CardContent>
             </Card>
 
-            {/* Sección 2: Descripción */}
+            {/* Sección 2: Descripción y requisitos */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-base font-heading">
-                  2. Descripción general
+                  2. Descripción y requisitos
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-5">
                 <FormField
                   control={form.control}
                   name="description"
@@ -339,15 +271,98 @@ export default function AdminConvocatoriaForm() {
                       <FormLabel>Descripción del cargo</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Describe la vacante, el equipo y la propuesta de valor para el candidato..."
-                          className="min-h-[120px]"
+                          placeholder="Describe el cargo, el equipo y el rol en pocas líneas..."
+                          className="min-h-[100px]"
                           {...field}
                         />
                       </FormControl>
                       <div className="flex justify-between items-center">
                         <FormMessage />
                         <span className="text-xs text-muted-foreground">
-                          {field.value.length}/100 min
+                          {field.value.length} / mín. 50
+                        </span>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-3">
+                  <FormLabel>Requisitos del cargo</FormLabel>
+                  {requirementFields.map((field, index) => (
+                    <div key={field.id} className="flex gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`requirements.${index}.value`}
+                        render={({ field: f }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input
+                                placeholder={`Requisito ${index + 1}`}
+                                {...f}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {requirementFields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeRequirement(index)}
+                          className="text-destructive hover:text-destructive shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => appendRequirement({ value: "" })}
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    Agregar requisito
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Sección 3: Criterios de IA */}
+            <Card className="border-primary/30">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-primary" />
+                  <CardTitle className="text-base font-heading">
+                    3. Criterios para la IA
+                  </CardTitle>
+                </div>
+                <CardDescription className="text-xs leading-relaxed">
+                  Describe en lenguaje natural qué candidatos debe aprobar o descartar la IA para esta convocatoria específica.
+                  Sé concreto: menciona experiencia mínima, requisitos excluyentes, habilidades clave y cualquier aspecto que la IA debe priorizar.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="aiPrompt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Instrucciones para la IA</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder={`Ej: "Prioriza candidatos con mínimo 1 año de experiencia en barismo. Es excluyente no tener conocimiento de técnicas de extracción. Descarta candidatos sin disponibilidad para turnos rotativos. Valora especialmente el dominio de latte art y café de especialidad."`}
+                          className="min-h-[140px] text-sm"
+                          {...field}
+                        />
+                      </FormControl>
+                      <div className="flex justify-between items-center mt-1">
+                        <FormMessage />
+                        <span className="text-xs text-muted-foreground">
+                          {field.value.length} caracteres
                         </span>
                       </div>
                     </FormItem>
@@ -356,166 +371,7 @@ export default function AdminConvocatoriaForm() {
               </CardContent>
             </Card>
 
-            {/* Sección 3: Funciones */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base font-heading">
-                  3. Funciones del cargo
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {functionFields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2">
-                    <FormField
-                      control={form.control}
-                      name={`functions.${index}.value`}
-                      render={({ field: f }) => (
-                        <FormItem className="flex-1">
-                          <FormControl>
-                            <Input
-                              placeholder={`Función ${index + 1}`}
-                              {...f}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {functionFields.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeFunction(index)}
-                        className="text-destructive hover:text-destructive shrink-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => appendFunction({ value: "" })}
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  Agregar función
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Sección 4: Requisitos */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base font-heading">
-                  4. Requisitos
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {requirementFields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2">
-                    <FormField
-                      control={form.control}
-                      name={`requirements.${index}.value`}
-                      render={({ field: f }) => (
-                        <FormItem className="flex-1">
-                          <FormControl>
-                            <Input
-                              placeholder={`Requisito ${index + 1}`}
-                              {...f}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {requirementFields.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeRequirement(index)}
-                        className="text-destructive hover:text-destructive shrink-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => appendRequirement({ value: "" })}
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  Agregar requisito
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Sección 5: Perfil ideal */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base font-heading">
-                  5. Perfil ideal del candidato
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {candidateFields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2">
-                    <FormField
-                      control={form.control}
-                      name={`idealCandidate.${index}.label`}
-                      render={({ field: f }) => (
-                        <FormItem className="w-40 shrink-0">
-                          <FormControl>
-                            <Input placeholder="Etiqueta" {...f} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`idealCandidate.${index}.text`}
-                      render={({ field: f }) => (
-                        <FormItem className="flex-1">
-                          <FormControl>
-                            <Input placeholder="Descripción del atributo" {...f} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {candidateFields.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeCandidate(index)}
-                        className="text-destructive hover:text-destructive shrink-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => appendCandidate({ label: "", text: "" })}
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  Agregar atributo
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Actions */}
+            {/* Acciones */}
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
               <Button type="submit" className="w-full sm:w-auto">
                 <Send className="w-4 h-4 mr-1.5" />
@@ -525,9 +381,7 @@ export default function AdminConvocatoriaForm() {
                 type="button"
                 variant="outline"
                 className="w-full sm:w-auto"
-                onClick={() =>
-                  form.handleSubmit((v) => onSubmit(v, true))()
-                }
+                onClick={() => form.handleSubmit((v) => onSubmit(v, true))()}
               >
                 <Save className="w-4 h-4 mr-1.5" />
                 Guardar como borrador
