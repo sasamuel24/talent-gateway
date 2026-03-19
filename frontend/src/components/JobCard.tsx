@@ -1,6 +1,6 @@
 import { MapPin, Calendar, Briefcase } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { Job } from "@/data/jobs";
+import type { JobListItem } from "@/hooks/useConvocatorias";
 
 const contractColor: Record<string, string> = {
   "Término Indefinido": "bg-primary/10 text-primary",
@@ -8,8 +8,16 @@ const contractColor: Record<string, string> = {
   "Practicante": "bg-secondary text-secondary-foreground",
 };
 
-const JobCard = ({ job }: { job: Job }) => {
-  const badgeClass = contractColor[job.type] ?? "bg-muted text-muted-foreground";
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+const JobCard = ({ job }: { job: JobListItem }) => {
+  const badgeClass = contractColor[job.type ?? ""] ?? "bg-muted text-muted-foreground";
+  const locationStr = [job.location, job.department].filter(Boolean).join(", ");
 
   return (
     <Link
@@ -20,23 +28,31 @@ const JobCard = ({ job }: { job: Job }) => {
         <h3 className="text-sm font-heading font-bold text-job-link group-hover:underline uppercase tracking-wide leading-snug">
           {job.title}
         </h3>
-        <span className={`shrink-0 text-xs px-3 py-1 rounded-full font-body font-medium transition-colors duration-150 ${badgeClass}`}>
-          {job.type}
-        </span>
+        {job.type && (
+          <span className={`shrink-0 text-xs px-3 py-1 rounded-full font-body font-medium transition-colors duration-150 ${badgeClass}`}>
+            {job.type}
+          </span>
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
-        <span className="flex items-center gap-1">
-          <MapPin className="h-3.5 w-3.5 text-primary/60" />
-          {job.location}, {job.department}
-        </span>
-        <span className="flex items-center gap-1">
-          <Briefcase className="h-3.5 w-3.5 text-primary/60" />
-          {job.area}
-        </span>
-        <span className="flex items-center gap-1">
-          <Calendar className="h-3.5 w-3.5 text-primary/60" />
-          {job.date}
-        </span>
+        {locationStr && (
+          <span className="flex items-center gap-1">
+            <MapPin className="h-3.5 w-3.5 text-primary/60" />
+            {locationStr}
+          </span>
+        )}
+        {job.area && (
+          <span className="flex items-center gap-1">
+            <Briefcase className="h-3.5 w-3.5 text-primary/60" />
+            {job.area}
+          </span>
+        )}
+        {job.date_posted && (
+          <span className="flex items-center gap-1">
+            <Calendar className="h-3.5 w-3.5 text-primary/60" />
+            {formatDate(job.date_posted)}
+          </span>
+        )}
       </div>
     </Link>
   );

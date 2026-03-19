@@ -1,14 +1,38 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Calendar, Briefcase, Share2, Bookmark, CheckCircle2 } from "lucide-react";
-import { allJobs } from "@/data/jobs";
+import { ArrowLeft, MapPin, Calendar, Briefcase, Share2, Bookmark, CheckCircle2, Loader2 } from "lucide-react";
+import { useConvocatoria, useIncrementViews } from "@/hooks/useConvocatorias";
 import Layout from "@/components/Layout";
+import { useEffect } from "react";
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
 
 const JobDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const job = allJobs.find((j) => j.id === Number(id));
+  const { data: job, isLoading, isError } = useConvocatoria(id);
+  const incrementViews = useIncrementViews();
 
-  if (!job) {
+  useEffect(() => {
+    if (id) incrementViews.mutate(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (isError || !job) {
     return (
       <Layout>
         <div className="min-h-[60vh] flex items-center justify-center">
@@ -25,30 +49,41 @@ const JobDetail = () => {
     );
   }
 
+  const funciones = job.requirements.filter((r) => r.type === "funcion");
+  const requisitos = job.requirements.filter((r) => r.type === "requisito");
+  const perfilIdeal = job.requirements.filter((r) => r.type === "perfil_ideal");
+  const locationStr = [job.location, job.department].filter(Boolean).join(", ");
+
   return (
     <Layout>
       {/* Hero header bar */}
       <div className="bg-gradient-to-br from-primary to-primary/80 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <p className="text-xs uppercase tracking-brand text-white/70 font-heading font-semibold mb-2">
-            {job.area} · {job.refId}
+            {[job.area, job.ref_id].filter(Boolean).join(" · ")}
           </p>
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold uppercase tracking-wide leading-tight">
             {job.title}
           </h1>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-white/75 text-sm font-body">
-            <span className="flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
-              {job.location}, {job.department}
-            </span>
-            <span className="flex items-center gap-1">
-              <Briefcase className="h-4 w-4" />
-              {job.type}
-            </span>
-            <span className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              Publicado el {job.date}
-            </span>
+            {locationStr && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
+                {locationStr}
+              </span>
+            )}
+            {job.type && (
+              <span className="flex items-center gap-1">
+                <Briefcase className="h-4 w-4" />
+                {job.type}
+              </span>
+            )}
+            {job.date_posted && (
+              <span className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                Publicado el {formatDate(job.date_posted)}
+              </span>
+            )}
           </div>
 
           {/* Action buttons */}
@@ -80,66 +115,76 @@ const JobDetail = () => {
         </Link>
 
         {/* Intro */}
-        <div className="mb-8">
-          <h2 className="text-base font-heading font-bold uppercase tracking-brand text-foreground mb-3">
-            Nuestro Compromiso con la Calidad
-          </h2>
-          <p className="text-sm text-muted-foreground leading-relaxed font-body">{job.description}</p>
-          <p className="text-sm text-foreground font-semibold font-body mt-4">
-            ¡Muchas gracias por tu interés en la posición de{" "}
-            <span className="text-primary">{job.title}</span> y querer formar parte de Café Quindío!
-          </p>
-        </div>
+        {job.description && (
+          <div className="mb-8">
+            <h2 className="text-base font-heading font-bold uppercase tracking-brand text-foreground mb-3">
+              Nuestro Compromiso con la Calidad
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed font-body">{job.description}</p>
+            <p className="text-sm text-foreground font-semibold font-body mt-4">
+              ¡Muchas gracias por tu interés en la posición de{" "}
+              <span className="text-primary">{job.title}</span> y querer formar parte de Café Quindío!
+            </p>
+          </div>
+        )}
 
         {/* Functions */}
-        <div className="mb-8">
-          <h3 className="text-xs font-heading font-bold uppercase tracking-brand text-primary mb-4 border-l-4 border-primary pl-3">
-            Funciones
-          </h3>
-          <ul className="space-y-2.5">
-            {job.functions.map((fn, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground font-body">
-                <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                {fn}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {funciones.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-xs font-heading font-bold uppercase tracking-brand text-primary mb-4 border-l-4 border-primary pl-3">
+              Funciones
+            </h3>
+            <ul className="space-y-2.5">
+              {funciones.map((fn) => (
+                <li key={fn.id} className="flex items-start gap-2.5 text-sm text-muted-foreground font-body">
+                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  {fn.content}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Requirements */}
-        <div className="mb-8">
-          <h3 className="text-xs font-heading font-bold uppercase tracking-brand text-primary mb-4 border-l-4 border-primary pl-3">
-            Requisitos
-          </h3>
-          <ul className="space-y-2.5">
-            {job.requirements.map((req, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground font-body">
-                <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                {req}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {requisitos.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-xs font-heading font-bold uppercase tracking-brand text-primary mb-4 border-l-4 border-primary pl-3">
+              Requisitos
+            </h3>
+            <ul className="space-y-2.5">
+              {requisitos.map((req) => (
+                <li key={req.id} className="flex items-start gap-2.5 text-sm text-muted-foreground font-body">
+                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  {req.content}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Ideal candidate */}
-        <div className="mb-8">
-          <h3 className="text-base font-heading font-bold uppercase tracking-brand text-foreground mb-4">
-            ¿Quién sería nuestro mejor candidato?
-          </h3>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {job.idealCandidate.map((item, i) => (
-              <div
-                key={i}
-                className="bg-muted rounded-lg p-4 border border-border hover:shadow-md hover:border-primary/30 transition-all duration-200"
-              >
-                <p className="text-xs font-heading font-bold uppercase tracking-brand text-primary mb-1">
-                  {item.label}
-                </p>
-                <p className="text-sm text-muted-foreground font-body leading-relaxed">{item.text}</p>
-              </div>
-            ))}
+        {perfilIdeal.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-base font-heading font-bold uppercase tracking-brand text-foreground mb-4">
+              ¿Quién sería nuestro mejor candidato?
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {perfilIdeal.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-muted rounded-lg p-4 border border-border hover:shadow-md hover:border-primary/30 transition-all duration-200"
+                >
+                  {item.label && (
+                    <p className="text-xs font-heading font-bold uppercase tracking-brand text-primary mb-1">
+                      {item.label}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground font-body leading-relaxed">{item.content}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Notice */}
         <p className="text-xs text-muted-foreground italic font-body mb-8 bg-muted rounded-lg p-4 border-l-4 border-gold hover:bg-amber-50/50 transition-colors duration-200">

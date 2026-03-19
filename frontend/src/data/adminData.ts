@@ -11,6 +11,40 @@ export type CandidateStatus =
   | "rechazado";
 export type AIDecision = "aprobado" | "rechazado" | "pendiente";
 
+// ─── Application detail types (mirror Apply form) ─────────────────────────────
+
+export interface CandidateExperienceEntry {
+  id: string;
+  puesto: string;
+  compania: string;
+  fechaInicio: string;
+  fechaFin?: string;
+  detalles?: string;
+}
+
+export interface CandidateEducationEntry {
+  id: string;
+  grado: string;
+  universidad: string;
+  estudios: string;
+  fechaTitulacion?: string;
+}
+
+export interface CandidateLanguageEntry {
+  id: string;
+  habilidad: string;
+  nivel: string;
+}
+
+export interface CandidateAddress {
+  direccion1?: string;
+  direccion2?: string;
+  ciudad?: string;
+  estado?: string;
+  pais?: string;
+  codigoPostal?: string;
+}
+
 export interface AdminJob extends Job {
   status: JobStatus;
   candidatesCount: number;
@@ -35,6 +69,13 @@ export interface Candidate {
   appliedDate: string;
   cvUrl?: string;
   notes?: string;
+  // Extended application data (from Apply form)
+  autorizado?: boolean;
+  exColaborador?: boolean;
+  address?: CandidateAddress;
+  experienceEntries?: CandidateExperienceEntry[];
+  educationEntries?: CandidateEducationEntry[];
+  languageEntries?: CandidateLanguageEntry[];
 }
 
 export interface AIWeight {
@@ -205,6 +246,54 @@ export const candidates: Candidate[] = [
     humanDecision: "entrevista",
     appliedDate: "10/03/2026",
     notes: "Candidata con excelente presentación y experiencia previa en Starbucks.",
+    cvUrl: "https://www.w3.org/WAI/WCAG21/Techniques/pdf/pdf-sample.pdf",
+    autorizado: true,
+    exColaborador: false,
+    address: {
+      direccion1: "Calle 15 # 8-42",
+      ciudad: "Montenegro",
+      estado: "Quindío",
+      pais: "Colombia",
+      codigoPostal: "632001",
+    },
+    experienceEntries: [
+      {
+        id: "e1",
+        puesto: "Barista Senior",
+        compania: "Starbucks Colombia – Armenia",
+        fechaInicio: "2024-01-15",
+        fechaFin: "2025-12-31",
+        detalles: "Preparación de bebidas de especialidad, latte art, atención al cliente, manejo de caja y apertura/cierre de tienda.",
+      },
+      {
+        id: "e2",
+        puesto: "Auxiliar de cafetería",
+        compania: "Café San Camilo",
+        fechaInicio: "2023-03-01",
+        fechaFin: "2023-12-31",
+        detalles: "Atención al público, servicio de mesa y preparación de bebidas calientes básicas.",
+      },
+    ],
+    educationEntries: [
+      {
+        id: "edu1",
+        grado: "Técnico",
+        universidad: "SENA – Regional Quindío",
+        estudios: "Técnico en Barismo y Cafés Especiales",
+        fechaTitulacion: "2022-11-30",
+      },
+      {
+        id: "edu2",
+        grado: "Bachiller",
+        universidad: "Institución Educativa San José – Montenegro",
+        estudios: "Bachillerato Académico",
+        fechaTitulacion: "2019-11-30",
+      },
+    ],
+    languageEntries: [
+      { id: "l1", habilidad: "Español", nivel: "Nativo / Bilingüe" },
+      { id: "l2", habilidad: "Inglés", nivel: "Básico" },
+    ],
   },
   {
     id: 2,
@@ -220,6 +309,35 @@ export const candidates: Candidate[] = [
     aiDecision: "pendiente",
     humanDecision: "nuevo",
     appliedDate: "09/03/2026",
+    autorizado: true,
+    exColaborador: false,
+    address: {
+      direccion1: "Carrera 19 # 22-10",
+      ciudad: "Armenia",
+      estado: "Quindío",
+      pais: "Colombia",
+    },
+    experienceEntries: [
+      {
+        id: "e1",
+        puesto: "Mesero",
+        compania: "Restaurante El Fogón Quindiano",
+        fechaInicio: "2025-01-10",
+        detalles: "Atención de mesas, toma de pedidos y cobro a clientes.",
+      },
+    ],
+    educationEntries: [
+      {
+        id: "edu1",
+        grado: "Bachiller",
+        universidad: "Colegio Inem José Celestino Mutis – Armenia",
+        estudios: "Bachillerato con énfasis comercial",
+        fechaTitulacion: "2023-11-30",
+      },
+    ],
+    languageEntries: [
+      { id: "l1", habilidad: "Español", nivel: "Nativo / Bilingüe" },
+    ],
   },
   {
     id: 3,
@@ -236,6 +354,48 @@ export const candidates: Candidate[] = [
     humanDecision: "aprobado",
     appliedDate: "08/03/2026",
     notes: "Finalista. Excelente conocimiento técnico y actitud de servicio.",
+    cvUrl: "https://www.w3.org/WAI/WCAG21/Techniques/pdf/pdf-sample.pdf",
+    autorizado: true,
+    exColaborador: false,
+    address: {
+      direccion1: "Cra 7 # 11-50 Apto 302",
+      ciudad: "Calarcá",
+      estado: "Quindío",
+      pais: "Colombia",
+      codigoPostal: "632002",
+    },
+    experienceEntries: [
+      {
+        id: "e1",
+        puesto: "Jefe de Bar",
+        compania: "Café Quindío – Tienda Bolívar",
+        fechaInicio: "2024-02-01",
+        fechaFin: "2025-10-31",
+        detalles: "Gestión del área de bar, entrenamiento de baristas, control de inventario y estándares de calidad.",
+      },
+      {
+        id: "e2",
+        puesto: "Barista",
+        compania: "Pergamino Café – Medellín",
+        fechaInicio: "2022-06-01",
+        fechaFin: "2024-01-31",
+        detalles: "Preparación de métodos filtrados (V60, Chemex, Aeropress) y espresso. Atención a clientes internacionales.",
+      },
+    ],
+    educationEntries: [
+      {
+        id: "edu1",
+        grado: "Tecnólogo",
+        universidad: "Institución Universitaria Pascual Bravo",
+        estudios: "Gestión de Servicios Gastronómicos",
+        fechaTitulacion: "2022-05-15",
+      },
+    ],
+    languageEntries: [
+      { id: "l1", habilidad: "Español", nivel: "Nativo / Bilingüe" },
+      { id: "l2", habilidad: "Inglés", nivel: "Intermedio" },
+      { id: "l3", habilidad: "Portugués", nivel: "Básico" },
+    ],
   },
   {
     id: 4,

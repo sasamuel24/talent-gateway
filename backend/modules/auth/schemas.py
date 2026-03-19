@@ -1,4 +1,8 @@
-from pydantic import BaseModel, EmailStr
+from __future__ import annotations
+
+from pydantic import BaseModel, ConfigDict, EmailStr
+
+from modules.usuarios.schemas import UserResponse
 
 
 class LoginRequest(BaseModel):
@@ -6,9 +10,14 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class TokenResponse(BaseModel):
+class LoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    user: UserResponse
+
+
+# Alias de compatibilidad usado en el router existente
+TokenResponse = LoginResponse
 
 
 class TokenPayload(BaseModel):

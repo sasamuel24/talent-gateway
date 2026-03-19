@@ -3,11 +3,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Trash2, ArrowLeft, Save, Send, Brain } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Save, Send, Brain, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -25,7 +31,11 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { adminJobs } from "@/data/adminData";
+import {
+  useConvocatoria,
+  useCreateConvocatoria,
+  useUpdateConvocatoria,
+} from "@/hooks/useConvocatorias";
 
 const formSchema = z.object({
   title: z.string().min(5, "El título debe tener al menos 5 caracteres"),
@@ -41,7 +51,10 @@ const formSchema = z.object({
     .min(1, "Agrega al menos un requisito"),
   aiPrompt: z
     .string()
-    .min(20, "Describe los criterios para que la IA evalúe candidatos (mín. 20 caracteres)"),
+    .min(
+      20,
+      "Describe los criterios para que la IA evalúe candidatos (mín. 20 caracteres)"
+    ),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -51,9 +64,12 @@ export default function AdminConvocatoriaForm() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const isEditing = Boolean(id);
-  const existingJob = isEditing
-    ? adminJobs.find((j) => j.id === Number(id))
-    : undefined;
+
+  const { data: existingJob, isLoading: isLoadingJob } = useConvocatoria(id);
+  const createMutation = useCreateConvocatoria();
+  const updateMutation = useUpdateConvocatoria();
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -75,32 +91,110 @@ export default function AdminConvocatoriaForm() {
     remove: removeRequirement,
   } = useFieldArray({ control: form.control, name: "requirements" });
 
+  // Populate form when editing and data is loaded
   useEffect(() => {
     if (existingJob) {
+      const reqs = existingJob.requirements
+        .filter((r) => r.type === "requisito")
+        .sort((a, b) => a.order - b.order)
+        .map((r) => ({ value: r.content }));
+
       form.reset({
         title: existingJob.title,
-        area: existingJob.area,
-        location: existingJob.location,
-        type: existingJob.type,
-        status: existingJob.status === "cerrada" ? "borrador" : existingJob.status,
-        description: existingJob.description,
-        requirements: existingJob.requirements.map((v) => ({ value: v })),
-        aiPrompt: existingJob.aiPrompt ?? "",
+        area: existingJob.area ?? "",
+        location: existingJob.location ?? "",
+        type: existingJob.type ?? "",
+        status:
+          existingJob.status === "cerrada" ? "borrador" : existingJob.status,
+        description: existingJob.description ?? "",
+        requirements: reqs.length > 0 ? reqs : [{ value: "" }],
+        aiPrompt: existingJob.ai_prompt ?? "",
       });
     }
   }, [existingJob, form]);
 
-  const onSubmit = (values: FormValues, saveAsDraft = false) => {
-    const finalStatus = saveAsDraft ? "borrador" : values.status;
-    console.log("Guardar convocatoria:", { ...values, status: finalStatus });
-    toast({
-      title: saveAsDraft ? "Borrador guardado" : "Convocatoria publicada",
-      description: saveAsDraft
-        ? "Los cambios fueron guardados como borrador."
-        : "La convocatoria fue publicada exitosamente.",
-    });
-    navigate("/admin/convocatorias");
+  const handleSubmit = async (values: FormValues, saveAsDraft: boolean) => {
+    const finalStatus: "borrador" | "activa" = saveAsDraft
+      ? "borrador"
+      : values.status;
+
+    const payload = {
+      title: values.title,
+      area: values.area,
+      location: values.location,
+      type: values.type,
+      status: finalStatus,
+      description: values.description,
+      ai_prompt: values.aiPrompt,
+    };
+
+    const requirements = values.requirements.map((r, i) => ({
+      type: "requisito" as const,
+      content: r.value,
+      order: i,
+    }));
+
+    if (isEditing && id) {
+      updateMutation.mutate(
+        { id, payload, requirements },
+        {
+          onSuccess: () => {
+            toast({
+              title: saveAsDraft ? "Borrador guardado" : "Cambios guardados",
+              description: saveAsDraft
+                ? "Los cambios fueron guardados como borrador."
+                : "La convocatoria fue actualizada exitosamente.",
+            });
+            navigate("/admin/convocatorias");
+          },
+          onError: (err) => {
+            toast({
+              title: "Error al guardar",
+              description:
+                err instanceof Error ? err.message : "Intenta de nuevo.",
+              variant: "destructive",
+            });
+          },
+        }
+      );
+    } else {
+      createMutation.mutate(
+        { payload, requirements },
+        {
+          onSuccess: () => {
+            toast({
+              title: saveAsDraft
+                ? "Borrador guardado"
+                : "Convocatoria publicada",
+              description: saveAsDraft
+                ? "Los cambios fueron guardados como borrador."
+                : "La convocatoria fue publicada exitosamente.",
+            });
+            navigate("/admin/convocatorias");
+          },
+          onError: (err) => {
+            toast({
+              title: "Error al crear",
+              description:
+                err instanceof Error ? err.message : "Intenta de nuevo.",
+              variant: "destructive",
+            });
+          },
+        }
+      );
+    }
   };
+
+  // Show spinner while loading job data in edit mode
+  if (isEditing && isLoadingJob) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -116,7 +210,7 @@ export default function AdminConvocatoriaForm() {
             </h1>
             {isEditing && existingJob && (
               <p className="text-sm text-muted-foreground mt-0.5">
-                {existingJob.refId} · {existingJob.title}
+                {existingJob.ref_id} · {existingJob.title}
               </p>
             )}
           </div>
@@ -124,7 +218,7 @@ export default function AdminConvocatoriaForm() {
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit((v) => onSubmit(v, false))}
+            onSubmit={form.handleSubmit((v) => handleSubmit(v, false))}
             className="space-y-6"
           >
             {/* Sección 1: Información básica */}
@@ -159,7 +253,10 @@ export default function AdminConvocatoriaForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Área</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccionar área" />
@@ -192,7 +289,10 @@ export default function AdminConvocatoriaForm() {
                       <FormItem>
                         <FormLabel>Ciudad</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ej: Armenia, Quindío" {...field} />
+                          <Input
+                            placeholder="Ej: Armenia, Quindío"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -207,7 +307,10 @@ export default function AdminConvocatoriaForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Tipo de contrato</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccionar tipo" />
@@ -236,7 +339,10 @@ export default function AdminConvocatoriaForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Estado inicial</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Estado" />
@@ -341,8 +447,11 @@ export default function AdminConvocatoriaForm() {
                   </CardTitle>
                 </div>
                 <CardDescription className="text-xs leading-relaxed">
-                  Describe en lenguaje natural qué candidatos debe aprobar o descartar la IA para esta convocatoria específica.
-                  Sé concreto: menciona experiencia mínima, requisitos excluyentes, habilidades clave y cualquier aspecto que la IA debe priorizar.
+                  Describe en lenguaje natural qué candidatos debe aprobar o
+                  descartar la IA para esta convocatoria específica. Sé
+                  concreto: menciona experiencia mínima, requisitos excluyentes,
+                  habilidades clave y cualquier aspecto que la IA debe
+                  priorizar.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -373,17 +482,32 @@ export default function AdminConvocatoriaForm() {
 
             {/* Acciones */}
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-              <Button type="submit" className="w-full sm:w-auto">
-                <Send className="w-4 h-4 mr-1.5" />
+              <Button
+                type="submit"
+                className="w-full sm:w-auto"
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-1.5" />
+                )}
                 {isEditing ? "Guardar cambios" : "Publicar convocatoria"}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 className="w-full sm:w-auto"
-                onClick={() => form.handleSubmit((v) => onSubmit(v, true))()}
+                disabled={isSaving}
+                onClick={() =>
+                  form.handleSubmit((v) => handleSubmit(v, true))()
+                }
               >
-                <Save className="w-4 h-4 mr-1.5" />
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-1.5" />
+                )}
                 Guardar como borrador
               </Button>
               <Button
@@ -391,6 +515,7 @@ export default function AdminConvocatoriaForm() {
                 variant="link"
                 className="text-muted-foreground"
                 onClick={() => navigate("/admin/convocatorias")}
+                disabled={isSaving}
               >
                 Cancelar
               </Button>

@@ -1,6 +1,6 @@
 import JobCard from "./JobCard";
-import { allJobs } from "@/data/jobs";
-import { SearchX } from "lucide-react";
+import { useConvocatorias } from "@/hooks/useConvocatorias";
+import { SearchX, Loader2 } from "lucide-react";
 
 interface JobListProps {
   keyword: string;
@@ -9,16 +9,36 @@ interface JobListProps {
 }
 
 const JobList = ({ keyword, location, filters }: JobListProps) => {
-  const filtered = allJobs.filter((job) => {
+  const { data: jobs = [], isLoading, isError } = useConvocatorias({ status: 'activa' });
+
+  const filtered = jobs.filter((job) => {
     const kw = keyword.toLowerCase();
     const loc = location.toLowerCase();
-    const matchesKeyword = !kw || job.title.toLowerCase().includes(kw) || job.area.toLowerCase().includes(kw);
-    const matchesLocation = !loc || job.location.toLowerCase().includes(loc) || job.department.toLowerCase().includes(loc);
-    const matchesDept = !filters["Departamento"]?.length || filters["Departamento"].includes(job.department);
-    const matchesArea = !filters["Área"]?.length || filters["Área"].includes(job.area);
-    const matchesType = !filters["Tipo de Contrato"]?.length || filters["Tipo de Contrato"].includes(job.type);
+    const matchesKeyword = !kw || job.title.toLowerCase().includes(kw) || (job.area ?? "").toLowerCase().includes(kw);
+    const matchesLocation = !loc || (job.location ?? "").toLowerCase().includes(loc) || (job.department ?? "").toLowerCase().includes(loc);
+    const matchesDept = !filters["Departamento"]?.length || filters["Departamento"].includes(job.department ?? "");
+    const matchesArea = !filters["Área"]?.length || filters["Área"].includes(job.area ?? "");
+    const matchesType = !filters["Tipo de Contrato"]?.length || filters["Tipo de Contrato"].includes(job.type ?? "");
     return matchesKeyword && matchesLocation && matchesDept && matchesArea && matchesType;
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-muted-foreground">
+        <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+        <span className="text-sm font-body">Cargando vacantes...</span>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-16 text-destructive border border-dashed border-destructive/30 rounded-lg">
+        <p className="text-sm font-heading font-bold uppercase tracking-brand">Error al cargar las vacantes</p>
+        <p className="text-xs mt-1 font-body text-muted-foreground">Intenta recargar la página</p>
+      </div>
+    );
+  }
 
   return (
     <div>

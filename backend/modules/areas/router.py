@@ -1,55 +1,30 @@
-from fastapi import APIRouter, Depends, status
+from __future__ import annotations
+
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_current_user, get_db
-from backend.modules.areas.schemas import AreaCreate, AreaResponse, AreaUpdate
-from backend.modules.areas.service import AreaService
+from core.dependencies import get_db
+from modules.areas.schemas import AreaStats
+from modules.areas.service import AreaService
 
 router = APIRouter(prefix="/api/v1/areas", tags=["areas"])
 
 
-@router.get("/", response_model=list[AreaResponse])
+@router.get("/", response_model=list[str])
 async def list_areas(
-    skip: int = 0,
-    limit: int = 100,
-    db: AsyncSession = Depends(get_db),
-):
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+) -> list[str]:
+    """Retorna lista de areas unicas registradas en convocatorias."""
     service = AreaService(db)
-    return await service.list_areas(skip=skip, limit=limit)
+    return await service.list_areas()
 
 
-@router.get("/{area_id}", response_model=AreaResponse)
-async def get_area(area_id: int, db: AsyncSession = Depends(get_db)):
+@router.get("/stats", response_model=list[AreaStats])
+async def get_area_stats(
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+) -> list[AreaStats]:
+    """Retorna estadisticas de jobs y aplicaciones por area."""
     service = AreaService(db)
-    return await service.get_area(area_id)
-
-
-@router.post("/", response_model=AreaResponse, status_code=status.HTTP_201_CREATED)
-async def create_area(
-    data: AreaCreate,
-    db: AsyncSession = Depends(get_db),
-    _: str = Depends(get_current_user),
-):
-    service = AreaService(db)
-    return await service.create_area(data)
-
-
-@router.put("/{area_id}", response_model=AreaResponse)
-async def update_area(
-    area_id: int,
-    data: AreaUpdate,
-    db: AsyncSession = Depends(get_db),
-    _: str = Depends(get_current_user),
-):
-    service = AreaService(db)
-    return await service.update_area(area_id, data)
-
-
-@router.delete("/{area_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_area(
-    area_id: int,
-    db: AsyncSession = Depends(get_db),
-    _: str = Depends(get_current_user),
-):
-    service = AreaService(db)
-    await service.delete_area(area_id)
+    return await service.get_area_stats()

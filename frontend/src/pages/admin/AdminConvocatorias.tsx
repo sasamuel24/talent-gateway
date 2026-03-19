@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Plus,
   Search,
@@ -8,10 +8,10 @@ import {
   Pencil,
   MoreHorizontal,
   Briefcase,
-  Copy,
   Trash2,
   CheckCircle,
   XCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,10 +38,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { adminJobs as initialJobs } from "@/data/adminData";
-import type { AdminJob, JobStatus } from "@/data/adminData";
+import {
+  useConvocatorias,
+  useToggleStatus,
+  useDeleteConvocatoria,
+} from "@/hooks/useConvocatorias";
+import type { JobListItem } from "@/hooks/useConvocatorias";
+
+type JobStatus = "activa" | "borrador" | "cerrada";
 
 const statusColors: Record<JobStatus, string> = {
   activa: "bg-green-100 text-green-700 border-green-200",
@@ -55,68 +62,79 @@ const statusLabels: Record<JobStatus, string> = {
   cerrada: "Cerrada",
 };
 
-const areas = [
-  "Todas",
-  "Tiendas",
-  "Producción",
-  "Logística",
-  "Marketing",
-  "Administración",
-  "Recursos Humanos",
-];
-
 export default function AdminConvocatorias() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [jobs, setJobs] = useState<AdminJob[]>(initialJobs);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
   const [areaFilter, setAreaFilter] = useState("Todas");
 
+  const { data, isLoading, isError, error } = useConvocatorias();
+  const toggleStatusMutation = useToggleStatus();
+  const deleteMutation = useDeleteConvocatoria();
+
+  const jobs: JobListItem[] = data ?? [];
+
+  // Compute unique areas dynamically from the fetched list
+  const areas = useMemo(() => {
+    const unique = Array.from(
+      new Set(jobs.map((j) => j.area).filter((a): a is string => Boolean(a)))
+    ).sort();
+    return ["Todas", ...unique];
+  }, [jobs]);
+
   const filtered = jobs.filter((j) => {
     const matchSearch =
       j.title.toLowerCase().includes(search.toLowerCase()) ||
-      j.refId.toLowerCase().includes(search.toLowerCase());
+      (j.ref_id ?? "").toLowerCase().includes(search.toLowerCase());
     const matchStatus =
       statusFilter === "todas" || j.status === statusFilter;
     const matchArea = areaFilter === "Todas" || j.area === areaFilter;
     return matchSearch && matchStatus && matchArea;
   });
 
-  const toggleStatus = (id: number, current: JobStatus) => {
-    const next: JobStatus = current === "activa" ? "cerrada" : "activa";
-    setJobs((prev) =>
-      prev.map((j) => (j.id === id ? { ...j, status: next } : j))
+  const toggleStatus = (id: string, current: JobStatus) => {
+    toggleStatusMutation.mutate(
+      { id, currentStatus: current },
+      {
+        onSuccess: (updated) => {
+          toast({
+            title: `Convocatoria ${updated.status === "activa" ? "activada" : "cerrada"}`,
+            description: `La vacante fue ${
+              updated.status === "activa" ? "publicada" : "cerrada"
+            } exitosamente.`,
+          });
+        },
+        onError: (err) => {
+          toast({
+            title: "Error al cambiar estado",
+            description: err instanceof Error ? err.message : "Intenta de nuevo.",
+            variant: "destructive",
+          });
+        },
+      }
     );
-    toast({
-      title: `Convocatoria ${next === "activa" ? "activada" : "cerrada"}`,
-      description: `La vacante fue ${next === "activa" ? "publicada" : "cerrada"} exitosamente.`,
-    });
   };
 
-  const duplicateJob = (job: AdminJob) => {
-    const newJob: AdminJob = {
-      ...job,
-      id: Date.now(),
-      title: `${job.title} (copia)`,
-      status: "borrador",
-      candidatesCount: 0,
-      views: 0,
-      refId: `req${Date.now().toString().slice(-5)}`,
-    };
-    setJobs((prev) => [newJob, ...prev]);
-    toast({
-      title: "Convocatoria duplicada",
-      description: "Se creó una copia como borrador.",
-    });
-  };
-
-  const deleteJob = (id: number) => {
-    setJobs((prev) => prev.filter((j) => j.id !== id));
-    toast({
-      title: "Convocatoria eliminada",
-      description: "La vacante fue eliminada del sistema.",
-      variant: "destructive",
+  const deleteJob = (id: string) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar esta convocatoria? Esta acción no se puede deshacer.")) {
+      return;
+    }
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        toast({
+          title: "Convocatoria eliminada",
+          description: "La vacante fue eliminada del sistema.",
+          variant: "destructive",
+        });
+      },
+      onError: (err) => {
+        toast({
+          title: "Error al eliminar",
+          description: err instanceof Error ? err.message : "Intenta de nuevo.",
+          variant: "destructive",
+        });
+      },
     });
   };
 
@@ -138,6 +156,18 @@ export default function AdminConvocatorias() {
             Nueva convocatoria
           </Button>
         </div>
+
+        {/* Error state */}
+        {isError && (
+          <Alert variant="destructive">
+            <AlertTitle>Error al cargar convocatorias</AlertTitle>
+            <AlertDescription>
+              {error instanceof Error
+                ? error.message
+                : "No se pudo conectar con el servidor. Verifica que el backend esté activo."}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
@@ -175,8 +205,15 @@ export default function AdminConvocatorias() {
           </Select>
         </div>
 
-        {/* Table */}
-        {filtered.length === 0 ? (
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!isLoading && !isError && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Briefcase className="w-12 h-12 text-muted-foreground/40 mb-4" />
             <h3 className="font-heading font-semibold text-foreground">
@@ -197,7 +234,10 @@ export default function AdminConvocatorias() {
               Limpiar filtros
             </Button>
           </div>
-        ) : (
+        )}
+
+        {/* Table */}
+        {!isLoading && !isError && filtered.length > 0 && (
           <div className="rounded-lg border bg-card overflow-hidden">
             <Table>
               <TableHeader>
@@ -225,13 +265,13 @@ export default function AdminConvocatorias() {
                     <TableCell>
                       <p className="font-medium text-sm">{job.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {job.refId}
+                        {job.ref_id ?? "—"}
                       </p>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                       <div>
-                        <p>{job.area}</p>
-                        <p className="text-xs">{job.department}</p>
+                        <p>{job.area ?? "—"}</p>
+                        <p className="text-xs">{job.department ?? ""}</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -246,7 +286,7 @@ export default function AdminConvocatorias() {
                       <div className="flex items-center gap-1.5 text-sm">
                         <Users className="w-3.5 h-3.5 text-muted-foreground" />
                         <span className="font-medium">
-                          {job.candidatesCount}
+                          {job.candidates_count}
                         </span>
                       </div>
                     </TableCell>
@@ -257,7 +297,9 @@ export default function AdminConvocatorias() {
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
-                      {job.date}
+                      {job.date_posted
+                        ? new Date(job.date_posted).toLocaleDateString("es-CO")
+                        : "—"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
@@ -298,6 +340,7 @@ export default function AdminConvocatorias() {
                               onClick={() =>
                                 toggleStatus(job.id, job.status)
                               }
+                              disabled={toggleStatusMutation.isPending}
                             >
                               {job.status === "activa" ? (
                                 <>
@@ -311,14 +354,11 @@ export default function AdminConvocatorias() {
                                 </>
                               )}
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => duplicateJob(job)}>
-                              <Copy className="w-4 h-4 mr-2 text-muted-foreground" />
-                              Duplicar
-                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => deleteJob(job.id)}
                               className="text-destructive"
+                              disabled={deleteMutation.isPending}
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
                               Eliminar

@@ -1,28 +1,46 @@
-from pydantic import BaseModel, EmailStr
+from __future__ import annotations
+
+import uuid
 from datetime import datetime
 
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-class UsuarioBase(BaseModel):
+
+class UserBase(BaseModel):
+    name: str = Field(..., max_length=100)
     email: EmailStr
-    nombre: str
-    apellido: str
-    rol: str = "reclutador"
-    activo: bool = True
+    role: str = Field(default="viewer", pattern="^(admin|recruiter|viewer)$")
+    status: str = Field(default="activo", pattern="^(activo|inactivo)$")
 
 
-class UsuarioCreate(UsuarioBase):
+class UserCreate(UserBase):
+    password: str = Field(..., min_length=8)
+
+
+class UserUpdate(BaseModel):
+    name: str | None = Field(default=None, max_length=100)
+    email: EmailStr | None = None
+    role: str | None = Field(default=None, pattern="^(admin|recruiter|viewer)$")
+    status: str | None = Field(default=None, pattern="^(activo|inactivo)$")
+    password: str | None = Field(default=None, min_length=8)
+
+
+class UserResponse(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    created_at: datetime
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
     password: str
 
 
-class UsuarioUpdate(BaseModel):
-    nombre: str | None = None
-    apellido: str | None = None
-    rol: str | None = None
-    activo: bool | None = None
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
 
 
-class UsuarioResponse(UsuarioBase):
-    id: int
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
+class TokenData(BaseModel):
+    user_id: str | None = None

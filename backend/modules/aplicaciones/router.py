@@ -1,70 +1,116 @@
-from fastapi import APIRouter, Depends, Query, status
+from __future__ import annotations
+
+import uuid
+from typing import Annotated
+
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from fastapi import status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_current_user, get_db
-from backend.modules.aplicaciones.schemas import (
-    AplicacionCreate,
-    AplicacionResponse,
-    AplicacionUpdate,
+from core.dependencies import get_current_user, get_db
+from db.session import AsyncSessionLocal
+from modules.aplicaciones.schemas import (
+    ApplicationCreate,
+    ApplicationDecisionUpdate,
+    ApplicationFullResponse,
+    ApplicationNotesUpdate,
 )
-from backend.modules.aplicaciones.service import AplicacionService
+from modules.aplicaciones.service import ApplicationService
+from modules.ia.analyzer import analyze_application
+
+
+async def _run_ai_analysis(application_id: uuid.UUID) -> None:
+    """Background task con su propia sesión de BD."""
+    async with AsyncSessionLocal() as db:
+        try:
+            await analyze_application(application_id, db)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).error(
+                "Background IA analysis failed for %s: %s", application_id, exc
+            )
+
 
 router = APIRouter(prefix="/api/v1/aplicaciones", tags=["aplicaciones"])
 
 
-@router.get("/", response_model=list[AplicacionResponse])
-async def list_aplicaciones(
+@router.get("/", response_model=list[ApplicationFullResponse])
+async def list_applications(
     skip: int = 0,
     limit: int = 100,
-    convocatoria_id: int | None = Query(default=None),
-    candidato_id: int | None = Query(default=None),
-    db: AsyncSession = Depends(get_db),
-    _: str = Depends(get_current_user),
-):
-    service = AplicacionService(db)
-    return await service.list_aplicaciones(
+    job_id: uuid.UUID | None = Query(default=None),
+    ai_decision: str | None = Query(default=None),
+    human_decision: str | None = Query(default=None),
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+    _: Annotated[str, Depends(get_current_user)] = None,
+) -> list[ApplicationFullResponse]:
+    service = ApplicationService(db)
+    return await service.list_applications(
         skip=skip,
         limit=limit,
-        convocatoria_id=convocatoria_id,
-        candidato_id=candidato_id,
+        job_id=job_id,
+        ai_decision=ai_decision,
+        human_decision=human_decision,
     )
 
 
-@router.get("/{aplicacion_id}", response_model=AplicacionResponse)
-async def get_aplicacion(
-    aplicacion_id: int,
-    db: AsyncSession = Depends(get_db),
-    _: str = Depends(get_current_user),
-):
-    service = AplicacionService(db)
-    return await service.get_aplicacion(aplicacion_id)
+@router.post(
+    "/",
+    response_model=ApplicationFullResponse,
+    status_code=http_status.HTTP_201_CREATED,
+)
+async def create_application(
+    data: ApplicationCreate,
+    background_tasks: BackgroundTasks,
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+) -> ApplicationFullResponse:
+    service = ApplicationService(db)
+    app = await service.create_application(data)
+    background_tasks.add_task(_run_ai_analysis, uuid.UUID(str(app.id)))
+    return app
 
 
-@router.post("/", response_model=AplicacionResponse, status_code=status.HTTP_201_CREATED)
-async def create_aplicacion(
-    data: AplicacionCreate,
-    db: AsyncSession = Depends(get_db),
-):
-    service = AplicacionService(db)
-    return await service.create_aplicacion(data)
+@router.post("/{application_id}/analizar-ia", status_code=http_status.HTTP_202_ACCEPTED)
+async def reanalizar_ia(
+    application_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+    _: Annotated[str, Depends(get_current_user)] = None,
+) -> dict:
+    """Dispara re-análisis IA en background para una aplicación existente."""
+    background_tasks.add_task(_run_ai_analysis, application_id)
+    return {"message": "Análisis IA iniciado", "application_id": str(application_id)}
 
 
-@router.put("/{aplicacion_id}", response_model=AplicacionResponse)
-async def update_aplicacion(
-    aplicacion_id: int,
-    data: AplicacionUpdate,
-    db: AsyncSession = Depends(get_db),
-    _: str = Depends(get_current_user),
-):
-    service = AplicacionService(db)
-    return await service.update_aplicacion(aplicacion_id, data)
+@router.get("/{application_id}", response_model=ApplicationFullResponse)
+async def get_application(
+    application_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+    _: Annotated[str, Depends(get_current_user)] = None,
+) -> ApplicationFullResponse:
+    service = ApplicationService(db)
+    return await service.get_application(application_id)
 
 
-@router.delete("/{aplicacion_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_aplicacion(
-    aplicacion_id: int,
-    db: AsyncSession = Depends(get_db),
-    _: str = Depends(get_current_user),
-):
-    service = AplicacionService(db)
-    await service.delete_aplicacion(aplicacion_id)
+@router.patch("/{application_id}/decision", response_model=ApplicationFullResponse)
+async def update_human_decision(
+    application_id: uuid.UUID,
+    data: ApplicationDecisionUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+    _: Annotated[str, Depends(get_current_user)] = None,
+) -> ApplicationFullResponse:
+    """Actualiza la decision humana de una aplicacion."""
+    service = ApplicationService(db)
+    return await service.update_decision(application_id, data)
+
+
+@router.patch("/{application_id}/notes", response_model=ApplicationFullResponse)
+async def update_notes(
+    application_id: uuid.UUID,
+    data: ApplicationNotesUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+    _: Annotated[str, Depends(get_current_user)] = None,
+) -> ApplicationFullResponse:
+    """Actualiza las notas del reclutador sobre una aplicacion."""
+    service = ApplicationService(db)
+    return await service.update_notes(application_id, data)

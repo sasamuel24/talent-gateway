@@ -1,48 +1,159 @@
+from __future__ import annotations
+
+import logging
+import uuid
+
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.modules.aplicaciones.repository import AplicacionRepository
-from backend.modules.aplicaciones.schemas import AplicacionCreate, AplicacionUpdate
+from modules.aplicaciones.repository import ApplicationRepository
+from modules.aplicaciones.schemas import (
+    ApplicationCreate,
+    ApplicationDecisionUpdate,
+    ApplicationFullResponse,
+    ApplicationNotesUpdate,
+)
+
+logger = logging.getLogger(__name__)
 
 
-class AplicacionService:
+class ApplicationService:
     def __init__(self, db: AsyncSession):
-        self.repository = AplicacionRepository(db)
+        self.repository = ApplicationRepository(db)
 
-    async def list_aplicaciones(
+    # ── Serialización explícita ──────────────────────────────────────────────
+    # model_validate() de Pydantic v2 no resuelve relaciones SQLAlchemy anidadas
+    # de forma fiable; construimos el dict manualmente para garantizar que
+    # candidate y job siempre lleguen al frontend.
+
+    @staticmethod
+    def _serialize(app) -> ApplicationFullResponse:
+        candidate = app.candidate
+        job = app.job
+        return ApplicationFullResponse.model_validate({
+            "id": app.id,
+            "candidate_id": app.candidate_id,
+            "job_id": app.job_id,
+            "applied_date": app.applied_date,
+            "ai_score": app.ai_score,
+            "ai_decision": app.ai_decision,
+            "human_decision": app.human_decision,
+            "notes": app.notes,
+            "ai_justificacion": app.ai_justificacion,
+            "candidate": {
+                "id": candidate.id,
+                "name": candidate.name,
+                "email": candidate.email,
+                "phone": candidate.phone,
+                "location": candidate.location,
+                "cv_url": candidate.cv_url,
+                "experience": [
+                    {
+                        "id": e.id,
+                        "candidate_id": e.candidate_id,
+                        "position": e.position,
+                        "company": e.company,
+                        "start_date": e.start_date,
+                        "end_date": e.end_date,
+                        "details": e.details,
+                    }
+                    for e in candidate.experience
+                ],
+                "education": [
+                    {
+                        "id": e.id,
+                        "candidate_id": e.candidate_id,
+                        "degree": e.degree,
+                        "institution": e.institution,
+                        "field_of_study": e.field_of_study,
+                        "graduation_date": e.graduation_date,
+                    }
+                    for e in candidate.education
+                ],
+                "languages": [
+                    {
+                        "id": lang.id,
+                        "candidate_id": lang.candidate_id,
+                        "language": lang.language,
+                        "level": lang.level,
+                    }
+                    for lang in candidate.languages
+                ],
+            },
+            "job": {
+                "id": job.id,
+                "title": job.title,
+                "area": job.area,
+                "location": job.location,
+                "ref_id": job.ref_id,
+            },
+        })
+
+    # ── Métodos públicos ─────────────────────────────────────────────────────
+
+    async def list_applications(
         self,
         skip: int = 0,
         limit: int = 100,
-        convocatoria_id: int | None = None,
-        candidato_id: int | None = None,
-    ) -> list:
-        return await self.repository.get_all(
+        job_id: uuid.UUID | None = None,
+        ai_decision: str | None = None,
+        human_decision: str | None = None,
+    ) -> list[ApplicationFullResponse]:
+        apps = await self.repository.get_all(
             skip=skip,
             limit=limit,
-            convocatoria_id=convocatoria_id,
-            candidato_id=candidato_id,
+            job_id=job_id,
+            ai_decision=ai_decision,
+            human_decision=human_decision,
         )
+        return [self._serialize(a) for a in apps]
 
-    async def get_aplicacion(self, aplicacion_id: int):
-        aplicacion = await self.repository.get_by_id(aplicacion_id)
-        if not aplicacion:
+    async def get_application(self, application_id: uuid.UUID) -> ApplicationFullResponse:
+        app = await self.repository.get_by_id(application_id)
+        if app is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Aplicacion {aplicacion_id} no encontrada",
+                detail=f"Aplicacion {application_id} no encontrada",
             )
-        return aplicacion
+        return self._serialize(app)
 
-    async def create_aplicacion(self, data: AplicacionCreate):
-        payload = data.model_dump()
-        payload["estado"] = "recibida"
-        return await self.repository.create(payload)
-
-    async def update_aplicacion(self, aplicacion_id: int, data: AplicacionUpdate):
-        await self.get_aplicacion(aplicacion_id)
-        return await self.repository.update(
-            aplicacion_id, data.model_dump(exclude_none=True)
+    async def create_application(self, data: ApplicationCreate) -> ApplicationFullResponse:
+        """Crea una aplicacion. Si ya existe (mismo candidato + job), retorna la existente sin error."""
+        existing = await self.repository.get_by_candidate_and_job(
+            data.candidate_id, data.job_id
         )
+        if existing is not None:
+            logger.info(
+                "Aplicacion duplicada para candidato=%s job=%s, retornando existente",
+                data.candidate_id,
+                data.job_id,
+            )
+            return self._serialize(existing)
 
-    async def delete_aplicacion(self, aplicacion_id: int) -> bool:
-        await self.get_aplicacion(aplicacion_id)
-        return await self.repository.delete(aplicacion_id)
+        app = await self.repository.create({"candidate_id": data.candidate_id, "job_id": data.job_id})
+        logger.info(
+            "Aplicacion creada: candidato=%s job=%s", data.candidate_id, data.job_id
+        )
+        return self._serialize(app)
+
+    async def update_decision(
+        self, application_id: uuid.UUID, data: ApplicationDecisionUpdate
+    ) -> ApplicationFullResponse:
+        await self.get_application(application_id)
+        app = await self.repository.update(
+            application_id, {"human_decision": data.human_decision}
+        )
+        return self._serialize(app)
+
+    async def update_notes(
+        self, application_id: uuid.UUID, data: ApplicationNotesUpdate
+    ) -> ApplicationFullResponse:
+        await self.get_application(application_id)
+        app = await self.repository.update(
+            application_id, {"notes": data.notes}
+        )
+        return self._serialize(app)
+
+
+# Alias de compatibilidad
+AplicacionService = ApplicationService

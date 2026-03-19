@@ -5,8 +5,6 @@ import {
   Briefcase,
   Users,
   Brain,
-  Settings,
-  Bell,
   ChevronDown,
   ArrowLeft,
   LogOut,
@@ -24,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavItem {
   label: string;
@@ -36,7 +35,6 @@ const navItems: NavItem[] = [
   { label: "Convocatorias", path: "/admin/convocatorias", icon: Briefcase },
   { label: "Candidatos", path: "/admin/candidatos", icon: Users },
   { label: "Entrenamiento IA", path: "/admin/ia", icon: Brain },
-  { label: "Configuración", path: "/admin/configuracion", icon: Settings },
 ];
 
 const breadcrumbLabels: Record<string, string> = {
@@ -45,7 +43,6 @@ const breadcrumbLabels: Record<string, string> = {
   "/admin/convocatorias/nueva": "Nueva convocatoria",
   "/admin/candidatos": "Candidatos",
   "/admin/ia": "Entrenamiento IA",
-  "/admin/configuracion": "Configuración",
 };
 
 function getBreadcrumb(pathname: string): string {
@@ -53,6 +50,33 @@ function getBreadcrumb(pathname: string): string {
   if (pathname.includes("/editar")) return "Editar convocatoria";
   return "Admin";
 }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Administrador",
+  recruiter: "Reclutador",
+  viewer: "Visualizador",
+};
+
+function getRoleLabel(role: string): string {
+  return ROLE_LABELS[role] ?? role;
+}
+
+/**
+ * Returns the first letter of the first two words in a full name.
+ * e.g. "Valentina Ospina" → "VO", "Ana" → "A"
+ */
+function getInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -62,6 +86,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, logout } = useAuth();
+
+  const displayName = user?.name ?? "";
+  const initials = getInitials(displayName);
+  // Short name for the header button: first name + first letter of last name
+  const shortName = (() => {
+    const parts = displayName.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0];
+    return `${parts[0]} ${parts[1][0].toUpperCase()}.`;
+  })();
+  const roleLabel = getRoleLabel(user?.role ?? "");
 
   const currentLabel = getBreadcrumb(location.pathname);
 
@@ -124,14 +159,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </Link>
         <div className="flex items-center gap-3 px-3 py-2">
           <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white font-semibold text-xs shrink-0">
-            VO
+            {initials}
           </div>
           <div className="min-w-0">
             <p className="text-white text-sm font-medium truncate">
-              Valentina Ospina
+              {displayName}
             </p>
             <p className="text-white/60 text-xs truncate">
-              Gestora de Talento
+              {roleLabel}
             </p>
           </div>
         </div>
@@ -190,12 +225,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
-            </Button>
-
             {/* User menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -204,10 +233,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   className="flex items-center gap-2 px-2"
                 >
                   <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                    VO
+                    {initials}
                   </div>
                   <span className="hidden sm:inline text-sm font-medium">
-                    Valentina O.
+                    {shortName}
                   </span>
                   <ChevronDown className="w-3 h-3 text-muted-foreground" />
                 </Button>
@@ -221,7 +250,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => navigate("/")}
+                  onClick={logout}
                   className="text-destructive"
                 >
                   <LogOut className="w-4 h-4 mr-2" />

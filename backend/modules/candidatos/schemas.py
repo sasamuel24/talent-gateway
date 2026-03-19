@@ -1,36 +1,107 @@
-from pydantic import BaseModel, EmailStr
-from datetime import datetime
+from __future__ import annotations
+
+import uuid
+from datetime import date, datetime
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-class CandidatoBase(BaseModel):
-    nombre: str
-    apellido: str
-    email: EmailStr
-    telefono: str | None = None
-    pais: str = "Colombia"
-    estado: str | None = None
-    ciudad: str | None = None
-    linkedin_url: str | None = None
-    resumen: str | None = None
-    experiencia_anos: int | None = None
+# ---------------------------------------------------------------------------
+# Experience
+# ---------------------------------------------------------------------------
+class ExperienceBase(BaseModel):
+    position: str = Field(..., max_length=150)
+    company: str = Field(..., max_length=150)
+    start_date: date | None = None
+    end_date: date | None = None
+    details: str | None = None
 
 
-class CandidatoCreate(CandidatoBase):
-    password: str
+class ExperienceCreate(ExperienceBase):
+    pass
 
 
-class CandidatoUpdate(BaseModel):
-    nombre: str | None = None
-    apellido: str | None = None
-    telefono: str | None = None
-    ciudad: str | None = None
-    linkedin_url: str | None = None
-    resumen: str | None = None
-    experiencia_anos: int | None = None
+class ExperienceResponse(ExperienceBase):
+    model_config = ConfigDict(from_attributes=True)
 
-
-class CandidatoResponse(CandidatoBase):
     id: int
-    created_at: datetime
+    candidate_id: uuid.UUID
 
-    model_config = {"from_attributes": True}
+
+# ---------------------------------------------------------------------------
+# Education
+# ---------------------------------------------------------------------------
+class EducationBase(BaseModel):
+    degree: str | None = Field(
+        default=None,
+        pattern="^(Bachiller|Tecnico|Tecnólogo|Pregrado|Especialización|Maestría|Doctorado)$",
+    )
+    institution: str | None = Field(default=None, max_length=200)
+    field_of_study: str | None = Field(default=None, max_length=200)
+    graduation_date: date | None = None
+
+
+class EducationCreate(EducationBase):
+    pass
+
+
+class EducationResponse(EducationBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    candidate_id: uuid.UUID
+
+
+# ---------------------------------------------------------------------------
+# Language
+# ---------------------------------------------------------------------------
+class LanguageBase(BaseModel):
+    language: str | None = Field(default=None, max_length=50)
+    level: str | None = Field(
+        default=None,
+        pattern="^(Básico|Intermedio|Avanzado|Nativo/Bilingüe)$",
+    )
+
+
+class LanguageCreate(LanguageBase):
+    pass
+
+
+class LanguageResponse(LanguageBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    candidate_id: uuid.UUID
+
+
+# ---------------------------------------------------------------------------
+# Candidate
+# ---------------------------------------------------------------------------
+class CandidateBase(BaseModel):
+    name: str = Field(..., max_length=100)
+    email: EmailStr
+    phone: str | None = Field(default=None, max_length=20)
+    location: str | None = Field(default=None, max_length=100)
+    cv_url: str | None = Field(default=None, max_length=500)
+
+
+class CandidateCreate(CandidateBase):
+    pass
+
+
+class CandidateUpdate(BaseModel):
+    name: str | None = Field(default=None, max_length=100)
+    email: EmailStr | None = None
+    phone: str | None = None
+    location: str | None = None
+    cv_url: str | None = None
+
+
+class CandidateResponse(CandidateBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    created_at: datetime
+    experience: list[ExperienceResponse] = []
+    education: list[EducationResponse] = []
+    languages: list[LanguageResponse] = []

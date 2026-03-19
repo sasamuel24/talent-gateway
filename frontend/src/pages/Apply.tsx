@@ -1,8 +1,8 @@
 import { useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { allJobs } from "@/data/jobs";
+import { useConvocatoria } from "@/hooks/useConvocatorias";
 import Layout from "@/components/Layout";
-import { Upload, X, Plus, Trash2, CheckCircle, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { Upload, X, Plus, Trash2, CheckCircle, FileText, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -350,12 +350,12 @@ const Step4 = ({
               Arrastra tu CV aquí o{" "}
               <span className="text-primary underline underline-offset-2">selecciona un archivo</span>
             </p>
-            <p className="text-xs text-muted-foreground mt-1">PDF, DOC o DOCX • Máximo 10 MB</p>
+            <p className="text-xs text-muted-foreground mt-1">PDF • Máximo 10 MB</p>
           </div>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.doc,.docx"
+            accept=".pdf"
             className="hidden"
             onChange={handleFileChange}
           />
@@ -511,7 +511,7 @@ const Step4 = ({
 // ── Step 5 ─────────────────────────────────────────────────────────────────────
 
 interface Step5Props {
-  jobId: number;
+  jobId: string;
   jobTitle: string;
   navigate: (path: string) => void;
 }
@@ -559,14 +559,20 @@ const Step5 = ({ jobId, jobTitle, navigate }: Step5Props) => (
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
+const BASE_URL = 'http://localhost:8080'
+
 const Apply = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const job = allJobs.find((j) => j.id === Number(id));
+  const { data: job, isLoading, isError } = useConvocatoria(id);
 
   // ── Step state ──
   const [step, setStep] = useState(1);
   const TOTAL_STEPS = 5;
+
+  // ── Submit state ──
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   // ── Step 1 ──
   const [firstName, setFirstName] = useState("");
@@ -641,13 +647,124 @@ const Apply = () => {
     return Object.keys(errors).length === 0;
   };
 
+  // ── Submit to backend ───────────────────────────────────────────────────────
+
+  const handleSubmit = async () => {
+    if (!job) return;
+    setIsSubmitting(true);
+    setSubmitError("");
+    try {
+      // a) Crear candidato sin cv_url primero (necesitamos el ID para subir el archivo)
+      const cv_url: string | null = null;
+
+      // b) Build location string and create candidate
+      const locationParts = [ciudad, estado, pais].filter(Boolean);
+      const location = locationParts.join(", ");
+      const candidateRes = await fetch(`${BASE_URL}/api/v1/candidatos/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `${firstName} ${lastName}`.trim(),
+          email,
+          phone: telefono || undefined,
+          location: location || undefined,
+          cv_url: cv_url ?? null,
+        }),
+      });
+      if (!candidateRes.ok) throw new Error(await candidateRes.text());
+      const candidate = await candidateRes.json();
+      const candidateId: string = candidate.id;
+
+      // c) Subir PDF del CV a S3
+      if (cvFile) {
+        const formData = new FormData();
+        formData.append("file", cvFile);
+        const cvRes = await fetch(`${BASE_URL}/api/v1/candidatos/${candidateId}/cv`, {
+          method: "POST",
+          body: formData,
+        });
+        if (!cvRes.ok) {
+          console.warn("CV upload falló:", await cvRes.text());
+          // No bloqueamos el flujo si el CV falla — el candidato queda registrado igual
+        }
+      }
+
+      // e-f) Add experience entries
+      for (const exp of experiencias) {
+        const expRes = await fetch(`${BASE_URL}/api/v1/candidatos/${candidateId}/experience`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            position: exp.puesto,
+            company: exp.compania,
+            start_date: exp.fechaInicio || null,
+            end_date: exp.fechaFin || null,
+            details: exp.detalles || null,
+          }),
+        });
+        if (!expRes.ok) throw new Error(await expRes.text());
+      }
+
+      // g) Add education entries
+      for (const edu of educaciones) {
+        const eduRes = await fetch(`${BASE_URL}/api/v1/candidatos/${candidateId}/education`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            degree: edu.grado || null,
+            institution: edu.universidad || null,
+            field_of_study: edu.estudios || null,
+            graduation_date: edu.fechaTitulacion || null,
+          }),
+        });
+        if (!eduRes.ok) throw new Error(await eduRes.text());
+      }
+
+      // h) Add language entries
+      for (const idioma of idiomas) {
+        const langRes = await fetch(`${BASE_URL}/api/v1/candidatos/${candidateId}/languages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            language: idioma.habilidad,
+            level: idioma.nivel,
+          }),
+        });
+        if (!langRes.ok) throw new Error(await langRes.text());
+      }
+
+      // i) Create application
+      const appRes = await fetch(`${BASE_URL}/api/v1/aplicaciones/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          candidate_id: candidateId,
+          job_id: job.id,
+        }),
+      });
+      if (!appRes.ok) throw new Error(await appRes.text());
+
+      // j) Move to success step
+      setStep(5);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Error al enviar la solicitud. Intenta de nuevo.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // ── Navigation ──────────────────────────────────────────────────────────────
 
   const handleNext = () => {
     if (step === 1 && !validateStep1()) return;
     if (step === 2 && !validateStep2()) return;
     if (step === 3 && !validateStep3()) return;
-    if (step === 4 && !validateStep4()) return;
+    if (step === 4) {
+      if (!validateStep4()) return;
+      handleSubmit();
+      return;
+    }
     setStep((s) => Math.min(s + 1, TOTAL_STEPS));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -712,9 +829,19 @@ const Apply = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // ── Not found ───────────────────────────────────────────────────────────────
+  // ── Not found / loading ─────────────────────────────────────────────────────
 
-  if (!job) {
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (isError || !job) {
     return (
       <Layout>
         <div className="min-h-[60vh] flex items-center justify-center">
@@ -757,6 +884,11 @@ const Apply = () => {
 
           {/* Card */}
           <div className="bg-white border border-border rounded-lg p-6 sm:p-8 shadow-sm">
+            {submitError && (
+              <div className="mb-4 rounded-md bg-destructive/10 border border-destructive/30 px-4 py-3 text-sm text-destructive font-body">
+                {submitError}
+              </div>
+            )}
             {step === 1 && (
               <Step1
                 firstName={firstName}
@@ -872,10 +1004,20 @@ const Apply = () => {
             )}
             <button
               onClick={handleNext}
-              className="inline-flex items-center gap-1.5 px-6 py-2 rounded-full bg-primary text-white text-sm font-body font-bold hover:bg-primary/90 transition-all duration-200 active:scale-95 shadow-sm shadow-primary/30"
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-1.5 px-6 py-2 rounded-full bg-primary text-white text-sm font-body font-bold hover:bg-primary/90 transition-all duration-200 active:scale-95 shadow-sm shadow-primary/30 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Siguiente
-              <ChevronRight className="h-4 w-4" />
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  Siguiente
+                  <ChevronRight className="h-4 w-4" />
+                </>
+              )}
             </button>
           </div>
         </div>
