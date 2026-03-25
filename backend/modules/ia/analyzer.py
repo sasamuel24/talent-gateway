@@ -23,6 +23,7 @@ _SYSTEM_PROMPT = (
 )
 
 
+# Funcione para la lectura del PDF y CV.
 def _extract_pdf_text(cv_url: str) -> str:
     try:
         key = urlparse(cv_url).path.lstrip("/")
@@ -34,7 +35,7 @@ def _extract_pdf_text(cv_url: str) -> str:
         logger.warning("PDF extraction failed: %s", exc)
         return ""
 
-
+# Construye el prompt para la IA con toda la información relevante de la vacante y el candidato.
 def _build_prompt(job: Job, candidate: Candidate, cv_text: str) -> str:
     def req_list(type_: str) -> str:
         items = [r.content for r in job.requirements if r.type == type_]
@@ -90,7 +91,7 @@ Evalúa y responde con este JSON exacto (sin texto extra):
   "justificacion": "<párrafo completo, sin cortar>"
 }}"""
 
-
+# Función principal de análisis IA, que se ejecuta en background task y actualiza la aplicación con el resultado.
 async def analyze_application(application_id: uuid.UUID, db: AsyncSession) -> None:
     """Analiza una aplicación con Claude y actualiza ai_score, ai_decision, ai_justificacion."""
     result = await db.execute(

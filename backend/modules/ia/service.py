@@ -14,10 +14,7 @@ from modules.ia.schemas import (
     AIScoreResponse,
     AIWeightResponse,
     AIWeightUpdate,
-    MetricsHistoryResponse,
     ScoreBreakdown,
-    TrainingCaseCreate,
-    TrainingCaseResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -48,7 +45,7 @@ class IAService:
         """
         Placeholder de scoring IA.
         Retorna un score simulado basado en pesos de criterios.
-        El algoritmo ML real se implementara en Sprint 2.
+        El algoritmo ML real se implementará en Sprint 2.
         """
         logger.info(
             "Scoring candidato=%s para job=%s", request.candidate_id, request.job_id
@@ -82,25 +79,3 @@ class IAService:
             decision=decision,
             breakdown=breakdown,
         )
-
-    async def get_latest_metrics(self) -> MetricsHistoryResponse:
-        metrics = await self.repository.get_latest_metrics()
-        if metrics is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No hay metricas registradas",
-            )
-        return MetricsHistoryResponse.model_validate(metrics)
-
-    async def get_training_cases(
-        self, skip: int = 0, limit: int = 100
-    ) -> list[TrainingCaseResponse]:
-        cases = await self.repository.get_training_cases(skip=skip, limit=limit)
-        return [TrainingCaseResponse.model_validate(c) for c in cases]
-
-    async def create_training_case(
-        self, data: TrainingCaseCreate
-    ) -> TrainingCaseResponse:
-        case = await self.repository.create_training_case(data.model_dump())
-        logger.info("Training case creado: %s", case.id)
-        return TrainingCaseResponse.model_validate(case)

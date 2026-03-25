@@ -14,6 +14,7 @@ export interface JobListItem {
   ref_id: string | null
   status: 'activa' | 'borrador' | 'cerrada'
   views: number
+  ai_prompt: string | null
   candidates_count: number
   created_at: string
 }

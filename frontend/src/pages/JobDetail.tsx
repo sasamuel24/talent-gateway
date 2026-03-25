@@ -1,8 +1,8 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Calendar, Briefcase, Share2, Bookmark, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Briefcase, Share2, Bookmark, CheckCircle2, Loader2, Link2, Check } from "lucide-react";
 import { useConvocatoria, useIncrementViews } from "@/hooks/useConvocatorias";
 import Layout from "@/components/Layout";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -16,6 +16,39 @@ const JobDetail = () => {
   const navigate = useNavigate();
   const { data: job, isLoading, isError } = useConvocatoria(id);
   const incrementViews = useIncrementViews();
+  const [shareOpen, setShareOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const shareRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (shareRef.current && !shareRef.current.contains(e.target as Node)) {
+        setShareOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = job?.title ?? "Vacante en Café Quindío";
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch {
+        // user cancelled or not supported — fall through to dropdown
+      }
+    }
+    setShareOpen((prev) => !prev);
+  };
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     if (id) incrementViews.mutate(id);
@@ -93,12 +126,6 @@ const JobDetail = () => {
               className="inline-flex items-center px-6 py-2.5 bg-white text-primary text-xs font-heading font-bold uppercase tracking-brand rounded-full hover:bg-white/90 transition-all duration-200 active:scale-95 shadow-sm"
             >
               Postularme ahora
-            </button>
-            <button className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-white/40 text-white text-xs font-heading font-semibold uppercase tracking-brand rounded-full hover:bg-white/10 transition-all duration-200 active:scale-95">
-              <Share2 className="h-3.5 w-3.5" /> Compartir
-            </button>
-            <button className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-white/40 text-white text-xs font-heading font-semibold uppercase tracking-brand rounded-full hover:bg-white/10 transition-all duration-200 active:scale-95">
-              <Bookmark className="h-3.5 w-3.5" /> Guardar
             </button>
           </div>
         </div>
@@ -186,12 +213,6 @@ const JobDetail = () => {
           </div>
         )}
 
-        {/* Notice */}
-        <p className="text-xs text-muted-foreground italic font-body mb-8 bg-muted rounded-lg p-4 border-l-4 border-gold hover:bg-amber-50/50 transition-colors duration-200">
-          "Recuerda que en Café Quindío no realizamos ningún cobro por aplicar a nuestras
-          oportunidades. No te dejes engañar y aplica solo por los medios oficiales."
-        </p>
-
         {/* Bottom CTA */}
         <div className="flex flex-wrap items-center gap-3 pt-6 border-t border-border">
           <button
@@ -200,12 +221,49 @@ const JobDetail = () => {
           >
             Postularme ahora
           </button>
-          <button className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-border text-foreground text-xs font-heading font-semibold uppercase tracking-brand rounded-full hover:border-primary hover:text-primary transition-all duration-200 active:scale-95">
-            <Share2 className="h-3.5 w-3.5" /> Compartir
-          </button>
-          <button className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-border text-foreground text-xs font-heading font-semibold uppercase tracking-brand rounded-full hover:border-primary hover:text-primary transition-all duration-200 active:scale-95">
-            <Bookmark className="h-3.5 w-3.5" /> Guardar vacante
-          </button>
+          <div className="relative" ref={shareRef}>
+            <button
+              onClick={handleShare}
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-border text-foreground text-xs font-heading font-semibold uppercase tracking-brand rounded-full hover:border-primary hover:text-primary transition-all duration-200 active:scale-95"
+            >
+              <Share2 className="h-3.5 w-3.5" /> Compartir
+            </button>
+
+            {shareOpen && (() => {
+              const url = encodeURIComponent(window.location.href);
+              const text = encodeURIComponent(`${job?.title ?? "Vacante"} — Café Quindío`);
+              const networks = [
+                { label: "WhatsApp",  color: "#25D366", href: `https://wa.me/?text=${text}%20${url}` },
+                { label: "LinkedIn",  color: "#0A66C2", href: `https://www.linkedin.com/sharing/share-offsite/?url=${url}` },
+                { label: "X / Twitter", color: "#000",  href: `https://twitter.com/intent/tweet?text=${text}&url=${url}` },
+                { label: "Facebook",  color: "#1877F2", href: `https://www.facebook.com/sharer/sharer.php?u=${url}` },
+              ];
+              return (
+                <div className="absolute left-0 bottom-full mb-2 w-48 bg-white border border-border rounded-xl shadow-lg overflow-hidden z-50">
+                  {networks.map((n) => (
+                    <a
+                      key={n.label}
+                      href={n.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setShareOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-xs font-heading font-semibold hover:bg-muted transition-colors"
+                    >
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: n.color }} />
+                      {n.label}
+                    </a>
+                  ))}
+                  <button
+                    onClick={copyLink}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-heading font-semibold hover:bg-muted transition-colors border-t border-border"
+                  >
+                    {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Link2 className="h-3.5 w-3.5" />}
+                    {copied ? "¡Enlace copiado!" : "Copiar enlace"}
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
         </div>
 
         {/* Talent community */}

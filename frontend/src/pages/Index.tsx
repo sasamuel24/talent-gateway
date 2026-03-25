@@ -38,10 +38,10 @@ const Index = () => {
       {/* Employer branding strip */}
       <div className="bg-muted border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <p className="text-xs text-muted-foreground text-center font-body">
-            <span className="text-primary font-semibold">33 tiendas</span> en Colombia •{" "}
-            <span className="text-primary font-semibold">+30 años</span> de tradición cafetera •{" "}
-            <span className="text-primary font-semibold">Presencia internacional</span> en Arabia Saudita
+          <p className="text-base text-muted-foreground text-center font-heading font-bold tracking-wide">
+            <span className="text-primary">Café</span>{" "}
+            <span className="text-primary">del Corazón</span>{" "}
+            <span className="text-primary">de Colombia</span>
           </p>
         </div>
       </div>

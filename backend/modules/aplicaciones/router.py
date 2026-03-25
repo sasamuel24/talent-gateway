@@ -66,6 +66,7 @@ async def create_application(
 ) -> ApplicationFullResponse:
     service = ApplicationService(db)
     app = await service.create_application(data)
+    await db.commit()  # commit antes del background task para evitar race condition
     background_tasks.add_task(_run_ai_analysis, uuid.UUID(str(app.id)))
     return app
 

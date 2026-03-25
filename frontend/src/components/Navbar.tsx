@@ -6,7 +6,6 @@ import logo from "@/assets/logo-cafe-quindio.png";
 const navLinks = [
   { label: "Inicio", href: "/", internal: true },
   { label: "Nosotros", href: "https://www.cafequindio.com.co/pages/nosotros", internal: false },
-  { label: "Vida en CQ", href: "https://www.cafequindio.com.co/pages/trabaja-con-nosotros", internal: false },
   { label: "Beneficios", href: "https://www.cafequindio.com.co/collections/productos-de-cafe", internal: false },
   { label: "Tiendas", href: "https://www.cafequindio.com.co/pages/tiendas-cafe-quindio", internal: false },
 ];

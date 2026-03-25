@@ -58,6 +58,22 @@ class JobRepository:
         result = await self.db.execute(select(Job).where(Job.ref_id == ref_id))
         return result.scalar_one_or_none()
 
+    async def get_next_ref_sequence(self) -> int:
+        """Retorna el siguiente número secuencial global para ref_id CQ-NNN."""
+        result = await self.db.execute(
+            select(Job.ref_id)
+            .where(Job.ref_id.like("CQ-%"))
+            .order_by(Job.ref_id.desc())
+            .limit(1)
+        )
+        last = result.scalar_one_or_none()
+        if last is None:
+            return 1
+        try:
+            return int(last.split("-")[-1]) + 1
+        except (ValueError, IndexError):
+            return 1
+
     async def create(self, data: dict) -> Job:
         job = Job(**data)
         self.db.add(job)

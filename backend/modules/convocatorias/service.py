@@ -55,8 +55,11 @@ class JobService:
                     status_code=status.HTTP_409_CONFLICT,
                     detail=f"ref_id '{data.ref_id}' ya existe",
                 )
+        else:
+            seq = await self.repository.get_next_ref_sequence()
+            data = data.model_copy(update={"ref_id": f"CQ-{seq:03d}"})
         job = await self.repository.create(data.model_dump())
-        logger.info("Convocatoria creada: %s", job.id)
+        logger.info("Convocatoria creada: %s — ref_id: %s", job.id, job.ref_id)
         return JobResponse.model_validate(job)
 
     async def update_job(self, job_id: uuid.UUID, data: JobUpdate) -> JobResponse:

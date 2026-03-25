@@ -4,13 +4,16 @@ import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from db.models import AIMetricsHistory, AITrainingCase, AIWeight
+from db.models import AIWeight, Candidate, Job
 
 
 class IARepository:
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    # ── Weights ────────────────────────────────────────────────────────────
 
     async def get_all_weights(self) -> list[AIWeight]:
         result = await self.db.execute(select(AIWeight).order_by(AIWeight.category, AIWeight.id))
@@ -30,35 +33,9 @@ class IARepository:
         await self.db.refresh(weight)
         return weight
 
-    async def get_latest_metrics(self) -> AIMetricsHistory | None:
-        result = await self.db.execute(
-            select(AIMetricsHistory).order_by(AIMetricsHistory.recorded_at.desc()).limit(1)
-        )
-        return result.scalar_one_or_none()
-
-    async def get_training_cases(
-        self, skip: int = 0, limit: int = 100
-    ) -> list[AITrainingCase]:
-        result = await self.db.execute(
-            select(AITrainingCase)
-            .order_by(AITrainingCase.id.desc())
-            .offset(skip)
-            .limit(limit)
-        )
-        return list(result.scalars().all())
-
-    async def create_training_case(self, data: dict) -> AITrainingCase:
-        case = AITrainingCase(**data)
-        self.db.add(case)
-        await self.db.flush()
-        await self.db.refresh(case)
-        return case
+    # ── Candidate / Job data helpers (for scoring) ─────────────────────────
 
     async def get_candidate_data(self, candidate_id: uuid.UUID) -> dict:
-        """Retorna datos básicos del candidato para scoring."""
-        from db.models import Candidate
-        from sqlalchemy.orm import selectinload
-
         result = await self.db.execute(
             select(Candidate)
             .options(
@@ -80,10 +57,6 @@ class IARepository:
         }
 
     async def get_job_data(self, job_id: uuid.UUID) -> dict:
-        """Retorna datos básicos del job para scoring."""
-        from db.models import Job
-        from sqlalchemy.orm import selectinload
-
         result = await self.db.execute(
             select(Job)
             .options(selectinload(Job.requirements))

@@ -82,6 +82,7 @@ class JobListResponse(BaseModel):
     ref_id: str | None
     status: str
     views: int
+    ai_prompt: str | None
     created_at: datetime
     candidates_count: int = 0
 
