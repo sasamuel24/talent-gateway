@@ -214,6 +214,9 @@ class Application(Base):
     # relationships
     candidate: Mapped[Candidate] = relationship("Candidate", back_populates="applications")
     job: Mapped[Job] = relationship("Job", back_populates="applications")
+    comments: Mapped[list["ApplicationComment"]] = relationship(
+        "ApplicationComment", back_populates="application", cascade="all, delete-orphan", order_by="ApplicationComment.created_at"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -288,6 +291,35 @@ class CandidateLanguage(Base):
 
     # relationships
     candidate: Mapped[Candidate] = relationship("Candidate", back_populates="languages")
+
+
+# ---------------------------------------------------------------------------
+# application_comments
+# ---------------------------------------------------------------------------
+class ApplicationComment(Base):
+    __tablename__ = "application_comments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("applications.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    user_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), server_default=func.now(), nullable=False
+    )
+
+    # relationships
+    application: Mapped["Application"] = relationship("Application", back_populates="comments")
 
 
 # ---------------------------------------------------------------------------

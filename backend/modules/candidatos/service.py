@@ -45,10 +45,14 @@ class CandidateService:
         return CandidateResponse.model_validate(candidate)
 
     async def create_candidate(self, data: CandidateCreate) -> CandidateResponse:
-        """Crea un candidato. Si el email ya existe retorna el existente (upsert suave)."""
+        """Crea un candidato. Si el email ya existe, limpia el perfil anterior y retorna el existente."""
         existing = await self.repository.get_by_email(data.email)
         if existing is not None:
-            logger.info("Candidato ya existe con email %s, retornando existente", data.email)
+            logger.info(
+                "Candidato ya existe con email %s — limpiando experiencia/educación/idiomas previos",
+                data.email,
+            )
+            await self.repository.clear_profile_data(existing.id)
             return CandidateResponse.model_validate(existing)
         candidate = await self.repository.create(data.model_dump())
         logger.info("Candidato creado: %s", candidate.id)

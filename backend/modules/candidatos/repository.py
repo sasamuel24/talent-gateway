@@ -108,3 +108,17 @@ class CandidateRepository:
         await self.db.flush()
         await self.db.refresh(lang)
         return lang
+
+    async def clear_profile_data(self, candidate_id: uuid.UUID) -> None:
+        """Elimina experiencia, educación e idiomas previos para reemplazarlos en una nueva aplicación."""
+        from sqlalchemy import delete
+        await self.db.execute(
+            delete(CandidateExperience).where(CandidateExperience.candidate_id == candidate_id)
+        )
+        await self.db.execute(
+            delete(CandidateEducation).where(CandidateEducation.candidate_id == candidate_id)
+        )
+        await self.db.execute(
+            delete(CandidateLanguage).where(CandidateLanguage.candidate_id == candidate_id)
+        )
+        await self.db.flush()

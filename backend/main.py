@@ -6,6 +6,7 @@ from modules.convocatorias.router import router as convocatorias_router
 from modules.candidatos.router import router as candidatos_router
 from modules.candidatos.public_router import public_router as candidatos_public_router
 from modules.aplicaciones.router import router as aplicaciones_router
+from modules.comentarios.router import router as comentarios_router
 from modules.areas.router import router as areas_router
 from modules.dashboard.router import router as dashboard_router
 from modules.ia.router import router as ia_router
@@ -31,6 +32,7 @@ app.include_router(convocatorias_router)
 app.include_router(candidatos_public_router)
 app.include_router(candidatos_router)
 app.include_router(aplicaciones_router)
+app.include_router(comentarios_router)
 app.include_router(areas_router)
 app.include_router(dashboard_router)
 app.include_router(ia_router)

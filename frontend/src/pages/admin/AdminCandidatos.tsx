@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Search,
@@ -18,6 +18,8 @@ import {
   FileText,
   Loader2,
   Bot,
+  Send,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,9 +56,9 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import {
   useAplicaciones,
   useUpdateDecision,
-  useUpdateNotes,
 } from "@/hooks/useCandidatos";
 import type { ApplicationFull } from "@/hooks/useCandidatos";
+import { useComments, useAddComment, useDeleteComment } from "@/hooks/useComments";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -108,6 +110,103 @@ function ScoreBar({ score }: { score: number }) {
   );
 }
 
+// ─── CommentThread sub-component ──────────────────────────────────────────────
+
+function CommentThread({ applicationId }: { applicationId: string }) {
+  const { data: comments, isLoading } = useComments(applicationId);
+  const addComment = useAddComment(applicationId);
+  const deleteComment = useDeleteComment(applicationId);
+  const [text, setText] = useState("");
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const handleSend = () => {
+    const body = text.trim();
+    if (!body) return;
+    addComment.mutate(body, {
+      onSuccess: () => {
+        setText("");
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+      },
+    });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Thread */}
+      <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+        {isLoading && (
+          <div className="flex justify-center py-4">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+        )}
+        {!isLoading && (!comments || comments.length === 0) && (
+          <p className="text-xs text-muted-foreground text-center py-4 italic">
+            Sin comentarios aún. Sé el primero en añadir una nota.
+          </p>
+        )}
+        {comments?.map((c) => (
+          <div key={c.id} className="bg-muted/40 rounded-lg p-3 border border-border group">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-xs font-semibold text-foreground">{c.user_name}</span>
+                <span className="text-xs text-muted-foreground">·</span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(c.created_at).toLocaleString("es-CO", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+              <button
+                onClick={() => deleteComment.mutate(c.id)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                title="Eliminar comentario"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+            <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{c.body}</p>
+          </div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="flex gap-2 items-end">
+        <textarea
+          className="flex-1 text-sm border border-input rounded-md p-2.5 min-h-[68px] max-h-32 resize-none focus:outline-none focus:ring-2 focus:ring-ring bg-background"
+          placeholder="Escribe un comentario… (Ctrl+Enter para enviar)"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+        <Button
+          size="icon"
+          className="h-9 w-9 shrink-0"
+          onClick={handleSend}
+          disabled={!text.trim() || addComment.isPending}
+          title="Enviar comentario"
+        >
+          {addComment.isPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Send className="w-3.5 h-3.5" />
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function AdminCandidatos() {
@@ -120,11 +219,9 @@ export default function AdminCandidatos() {
   const [minScore, setMinScore] = useState(0);
   const [selectedCandidate, setSelectedCandidate] =
     useState<ApplicationFull | null>(null);
-  const [noteText, setNoteText] = useState("");
 
   const { data, isLoading, isError } = useAplicaciones();
   const updateDecision = useUpdateDecision();
-  const updateNotes = useUpdateNotes();
 
   useEffect(() => {
     const jobParam = searchParams.get("job");
@@ -178,24 +275,6 @@ export default function AdminCandidatos() {
           toast({
             title: "Error",
             description: "No se pudo actualizar el estado.",
-            variant: "destructive",
-          });
-        },
-      }
-    );
-  };
-
-  const saveNote = (id: string) => {
-    updateNotes.mutate(
-      { id, notes: noteText },
-      {
-        onSuccess: () => {
-          toast({ title: "Nota guardada" });
-        },
-        onError: () => {
-          toast({
-            title: "Error",
-            description: "No se pudo guardar la nota.",
             variant: "destructive",
           });
         },
@@ -359,7 +438,6 @@ export default function AdminCandidatos() {
                                 title="Ver perfil"
                                 onClick={() => {
                                   setSelectedCandidate(app);
-                                  setNoteText(app.notes ?? "");
                                 }}
                               >
                                 <Eye className="w-3.5 h-3.5" />
@@ -521,30 +599,13 @@ export default function AdminCandidatos() {
 
                   <Separator />
 
-                  {/* Notes */}
+                  {/* Comment thread */}
                   <div>
-                    <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                    <p className="text-sm font-medium mb-3 flex items-center gap-1.5">
                       <MessageSquare className="w-3.5 h-3.5" />
-                      Notas del reclutador
+                      Hilo de comentarios
                     </p>
-                    <textarea
-                      className="w-full text-sm border border-input rounded-md p-2.5 min-h-[80px] resize-none focus:outline-none focus:ring-2 focus:ring-ring bg-background"
-                      placeholder="Escribe tus observaciones sobre este candidato..."
-                      value={noteText}
-                      onChange={(e) => setNoteText(e.target.value)}
-                    />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="mt-2"
-                      onClick={() => saveNote(selectedCandidate.id)}
-                      disabled={updateNotes.isPending}
-                    >
-                      {updateNotes.isPending ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
-                      ) : null}
-                      Guardar nota
-                    </Button>
+                    <CommentThread applicationId={selectedCandidate.id} />
                   </div>
 
                   <Separator />
