@@ -1,59 +1,59 @@
 import { ChevronDown, ChevronUp, SlidersHorizontal } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import type { JobListItem } from "@/hooks/useConvocatorias";
+import type { CatalogItem } from "@/hooks/useCatalogs";
 
-interface FilterGroup {
-  label: string;
-  options: { name: string; count: number }[];
-}
-
-const filterGroups: FilterGroup[] = [
-  {
-    label: "País",
-    options: [
-      { name: "Colombia", count: 34 },
-      { name: "Ecuador", count: 8 },
-      { name: "Estados Unidos", count: 5 },
-    ],
-  },
-  {
-    label: "Departamento",
-    options: [
-      { name: "Quindío", count: 18 },
-      { name: "Bogotá D.C.", count: 12 },
-      { name: "Valle del Cauca", count: 7 },
-      { name: "Antioquia", count: 5 },
-    ],
-  },
-  {
-    label: "Área",
-    options: [
-      { name: "Producción", count: 14 },
-      { name: "Tiendas", count: 11 },
-      { name: "Logística", count: 8 },
-      { name: "Marketing", count: 6 },
-      { name: "Administración", count: 5 },
-      { name: "Recursos Humanos", count: 3 },
-    ],
-  },
-  {
-    label: "Tipo de Contrato",
-    options: [
-      { name: "Término Indefinido", count: 32 },
-      { name: "Término Fijo", count: 10 },
-      { name: "Practicante", count: 5 },
-    ],
-  },
-];
+const FILTER_LABELS = ["Ciudad", "Tipo de cargo", "Área de trabajo"];
 
 interface FiltersPanelProps {
+  jobs: JobListItem[];
+  ciudades: CatalogItem[];
+  tiposCargo: CatalogItem[];
+  areas: CatalogItem[];
   selectedFilters: Record<string, string[]>;
   onFilterChange: (group: string, option: string) => void;
   onReset: () => void;
 }
 
-const FiltersPanel = ({ selectedFilters, onFilterChange, onReset }: FiltersPanelProps) => {
+const FiltersPanel = ({ jobs, ciudades, tiposCargo, areas, selectedFilters, onFilterChange, onReset }: FiltersPanelProps) => {
+  const filterGroups = useMemo(() => {
+    const count = (values: (string | null)[]) =>
+      values.reduce<Record<string, number>>((acc, v) => {
+        if (v) acc[v] = (acc[v] ?? 0) + 1;
+        return acc;
+      }, {});
+
+    const cityCount = count(jobs.map((j) => j.city?.name ?? null));
+    const cargoCount = count(jobs.map((j) => j.job_type?.name ?? null));
+    const areaCount = count(jobs.map((j) => j.area_catalog?.name ?? null));
+
+    return [
+      {
+        label: "Ciudad",
+        options: ciudades
+          .filter((c) => c.is_active)
+          .map((c) => ({ name: c.name, count: cityCount[c.name] ?? 0 }))
+          .sort((a, b) => b.count - a.count),
+      },
+      {
+        label: "Tipo de cargo",
+        options: tiposCargo
+          .filter((t) => t.is_active)
+          .map((t) => ({ name: t.name, count: cargoCount[t.name] ?? 0 }))
+          .sort((a, b) => b.count - a.count),
+      },
+      {
+        label: "Área de trabajo",
+        options: areas
+          .filter((a) => a.is_active)
+          .map((a) => ({ name: a.name, count: areaCount[a.name] ?? 0 }))
+          .sort((a, b) => b.count - a.count),
+      },
+    ];
+  }, [jobs, ciudades, tiposCargo, areas]);
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(
-    Object.fromEntries(filterGroups.map((g) => [g.label, true]))
+    Object.fromEntries(FILTER_LABELS.map((l) => [l, true]))
   );
 
   const toggleGroup = (label: string) => {

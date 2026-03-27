@@ -36,12 +36,12 @@ import {
   useCreateConvocatoria,
   useUpdateConvocatoria,
 } from "@/hooks/useConvocatorias";
+import { useAreasAdmin, useCiudades } from "@/hooks/useCatalogs";
 
 const formSchema = z.object({
   title: z.string().min(5, "El título debe tener al menos 5 caracteres"),
-  area: z.string().min(1, "Selecciona un área"),
-  location: z.string().min(2, "Ingresa la ciudad"),
-  type: z.string().min(1, "Selecciona el tipo de contrato"),
+  area_id: z.number({ required_error: "Selecciona un área" }).positive("Selecciona un área"),
+  city_id: z.number({ required_error: "Selecciona una ciudad" }).positive("Selecciona una ciudad"),
   status: z.enum(["borrador", "activa"]),
   description: z
     .string()
@@ -66,6 +66,8 @@ export default function AdminConvocatoriaForm() {
   const isEditing = Boolean(id);
 
   const { data: existingJob, isLoading: isLoadingJob } = useConvocatoria(id);
+  const { data: areas = [] } = useAreasAdmin();
+  const { data: ciudades = [] } = useCiudades();
   const createMutation = useCreateConvocatoria();
   const updateMutation = useUpdateConvocatoria();
 
@@ -75,9 +77,8 @@ export default function AdminConvocatoriaForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      area: "",
-      location: "",
-      type: "",
+      area_id: 0,
+      city_id: 0,
       status: "borrador",
       description: "",
       requirements: [{ value: "" }],
@@ -101,9 +102,8 @@ export default function AdminConvocatoriaForm() {
 
       form.reset({
         title: existingJob.title,
-        area: existingJob.area ?? "",
-        location: existingJob.location ?? "",
-        type: existingJob.type ?? "",
+        area_id: existingJob.area_id ?? 0,
+        city_id: existingJob.city_id ?? 0,
         status:
           existingJob.status === "cerrada" ? "borrador" : existingJob.status,
         description: existingJob.description ?? "",
@@ -120,9 +120,8 @@ export default function AdminConvocatoriaForm() {
 
     const payload = {
       title: values.title,
-      area: values.area,
-      location: values.location,
-      type: values.type,
+      area_id: values.area_id,
+      city_id: values.city_id,
       status: finalStatus,
       description: values.description,
       ai_prompt: values.aiPrompt,
@@ -249,13 +248,13 @@ export default function AdminConvocatoriaForm() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="area"
+                    name="area_id"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Área</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
+                          onValueChange={(v) => field.onChange(Number(v))}
+                          value={field.value ? String(field.value) : ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -263,16 +262,9 @@ export default function AdminConvocatoriaForm() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {[
-                              "Producción",
-                              "Tiendas",
-                              "Logística",
-                              "Marketing",
-                              "Administración",
-                              "Recursos Humanos",
-                            ].map((a) => (
-                              <SelectItem key={a} value={a}>
-                                {a}
+                            {areas.filter((a) => a.is_active).map((a) => (
+                              <SelectItem key={a.id} value={String(a.id)}>
+                                {a.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -284,46 +276,23 @@ export default function AdminConvocatoriaForm() {
 
                   <FormField
                     control={form.control}
-                    name="location"
+                    name="city_id"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Ciudad</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Ej: Armenia, Quindío"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tipo de contrato</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
+                          onValueChange={(v) => field.onChange(Number(v))}
+                          value={field.value ? String(field.value) : ""}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar tipo" />
+                              <SelectValue placeholder="Seleccionar ciudad" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {[
-                              "Término Indefinido",
-                              "Término Fijo",
-                              "Practicante",
-                            ].map((t) => (
-                              <SelectItem key={t} value={t}>
-                                {t}
+                            {ciudades.filter((c) => c.is_active).map((c) => (
+                              <SelectItem key={c.id} value={String(c.id)}>
+                                {c.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -332,32 +301,32 @@ export default function AdminConvocatoriaForm() {
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estado inicial</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Estado" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="borrador">Borrador</SelectItem>
-                            <SelectItem value="activa">Activa</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem className="sm:max-w-[50%]">
+                      <FormLabel>Estado inicial</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Estado" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="borrador">Borrador</SelectItem>
+                          <SelectItem value="activa">Activa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
 

@@ -15,6 +15,7 @@ import AdminConvocatorias from "./pages/admin/AdminConvocatorias";
 import AdminConvocatoriaForm from "./pages/admin/AdminConvocatoriaForm";
 import AdminCandidatos from "./pages/admin/AdminCandidatos";
 import AdminIA from "./pages/admin/AdminIA";
+import AdminCatalogos from "@/pages/admin/AdminCatalogos";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/admin/convocatorias/:id/editar" element={<AdminConvocatoriaForm />} />
               <Route path="/admin/candidatos" element={<AdminCandidatos />} />
               <Route path="/admin/ia" element={<AdminIA />} />
+              <Route path="/admin/catalogos" element={<AdminCatalogos />} />
             </Route>
 
             {/* ── 404 ── */}

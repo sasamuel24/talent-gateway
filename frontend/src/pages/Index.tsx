@@ -3,11 +3,17 @@ import Layout from "@/components/Layout";
 import HeroSearch from "@/components/HeroSearch";
 import FiltersPanel from "@/components/FiltersPanel";
 import JobList from "@/components/JobList";
+import { useConvocatorias } from "@/hooks/useConvocatorias";
+import { useCiudades, useTiposCargo, useAreasAdmin } from "@/hooks/useCatalogs";
 
 const Index = () => {
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState("");
   const [filters, setFilters] = useState<Record<string, string[]>>({});
+  const { data: allJobs = [] } = useConvocatorias({ status: "activa" });
+  const { data: ciudades = [] } = useCiudades();
+  const { data: tiposCargo = [] } = useTiposCargo();
+  const { data: areas = [] } = useAreasAdmin();
 
   const handleFilterChange = useCallback((group: string, option: string) => {
     setFilters((prev) => {
@@ -50,6 +56,10 @@ const Index = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-64 shrink-0">
             <FiltersPanel
+              jobs={allJobs}
+              ciudades={ciudades}
+              tiposCargo={tiposCargo}
+              areas={areas}
               selectedFilters={filters}
               onFilterChange={handleFilterChange}
               onReset={handleReset}

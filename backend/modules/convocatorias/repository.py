@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from db.models import Application, Job, JobRequirement
+from db.models import Application, Job, JobRequirement, CatalogCity, CatalogJobType, CatalogArea, CatalogContractType
 
 
 class JobRepository:
@@ -27,7 +27,15 @@ class JobRepository:
             .where(Application.job_id == Job.id)
             .scalar_subquery()
         )
-        query = select(Job, subq.label("candidates_count"))
+        query = (
+            select(Job, subq.label("candidates_count"))
+            .options(
+                selectinload(Job.city),
+                selectinload(Job.job_type),
+                selectinload(Job.area_catalog),
+                selectinload(Job.contract_type),
+            )
+        )
         if status is not None:
             query = query.where(Job.status == status)
         if area is not None:
@@ -49,7 +57,13 @@ class JobRepository:
     async def get_by_id(self, job_id: uuid.UUID) -> Job | None:
         result = await self.db.execute(
             select(Job)
-            .options(selectinload(Job.requirements))
+            .options(
+                selectinload(Job.requirements),
+                selectinload(Job.city),
+                selectinload(Job.job_type),
+                selectinload(Job.area_catalog),
+                selectinload(Job.contract_type),
+            )
             .where(Job.id == job_id)
         )
         return result.scalar_one_or_none()
@@ -78,7 +92,7 @@ class JobRepository:
         job = Job(**data)
         self.db.add(job)
         await self.db.flush()
-        await self.db.refresh(job, ["requirements"])
+        await self.db.refresh(job, ["requirements", "city", "job_type", "area_catalog", "contract_type"])
         return job
 
     async def update(self, job_id: uuid.UUID, data: dict) -> Job | None:
@@ -88,7 +102,7 @@ class JobRepository:
         for key, value in data.items():
             setattr(job, key, value)
         await self.db.flush()
-        await self.db.refresh(job, ["requirements"])
+        await self.db.refresh(job, ["requirements", "city", "job_type", "area_catalog", "contract_type"])
         return job
 
     async def delete(self, job_id: uuid.UUID) -> bool:
@@ -105,7 +119,7 @@ class JobRepository:
             return None
         job.views += 1
         await self.db.flush()
-        await self.db.refresh(job, ["requirements"])
+        await self.db.refresh(job, ["requirements", "city", "job_type", "area_catalog", "contract_type"])
         return job
 
     async def add_requirement(self, job_id: uuid.UUID, data: dict) -> JobRequirement:

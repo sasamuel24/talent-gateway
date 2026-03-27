@@ -5,6 +5,7 @@ import {
   Briefcase,
   Users,
   Brain,
+  Database,
   ChevronDown,
   ArrowLeft,
   LogOut,
@@ -35,6 +36,7 @@ const navItems: NavItem[] = [
   { label: "Convocatorias", path: "/admin/convocatorias", icon: Briefcase },
   { label: "Candidatos", path: "/admin/candidatos", icon: Users },
   { label: "Entrenamiento IA", path: "/admin/ia", icon: Brain },
+  { label: "Catálogos", path: "/admin/catalogos", icon: Database },
 ];
 
 const breadcrumbLabels: Record<string, string> = {
@@ -43,6 +45,7 @@ const breadcrumbLabels: Record<string, string> = {
   "/admin/convocatorias/nueva": "Nueva convocatoria",
   "/admin/candidatos": "Candidatos",
   "/admin/ia": "Entrenamiento IA",
+  "/admin/catalogos": "Catálogos",
 };
 
 function getBreadcrumb(pathname: string): string {

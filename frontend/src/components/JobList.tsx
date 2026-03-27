@@ -14,12 +14,13 @@ const JobList = ({ keyword, location, filters }: JobListProps) => {
   const filtered = jobs.filter((job) => {
     const kw = keyword.toLowerCase();
     const loc = location.toLowerCase();
-    const matchesKeyword = !kw || job.title.toLowerCase().includes(kw) || (job.area ?? "").toLowerCase().includes(kw);
-    const matchesLocation = !loc || (job.location ?? "").toLowerCase().includes(loc) || (job.department ?? "").toLowerCase().includes(loc);
-    const matchesDept = !filters["Departamento"]?.length || filters["Departamento"].includes(job.department ?? "");
-    const matchesArea = !filters["Área"]?.length || filters["Área"].includes(job.area ?? "");
-    const matchesType = !filters["Tipo de Contrato"]?.length || filters["Tipo de Contrato"].includes(job.type ?? "");
-    return matchesKeyword && matchesLocation && matchesDept && matchesArea && matchesType;
+    const cityName = job.city?.name ?? "";
+    const matchesKeyword = !kw || job.title.toLowerCase().includes(kw) || (job.area_catalog?.name ?? job.area ?? "").toLowerCase().includes(kw);
+    const matchesLocation = !loc || cityName.toLowerCase().includes(loc);
+    const matchesCity = !filters["Ciudad"]?.length || filters["Ciudad"].includes(cityName);
+    const matchesCargo = !filters["Tipo de cargo"]?.length || filters["Tipo de cargo"].includes(job.job_type?.name ?? "");
+    const matchesArea = !filters["Área de trabajo"]?.length || filters["Área de trabajo"].includes(job.area_catalog?.name ?? "");
+    return matchesKeyword && matchesLocation && matchesCity && matchesCargo && matchesArea;
   });
 
   if (isLoading) {

@@ -54,6 +54,41 @@ class User(Base):
 
 
 # ---------------------------------------------------------------------------
+# catalogs
+# ---------------------------------------------------------------------------
+class CatalogCity(Base):
+    __tablename__ = "catalog_cities"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    jobs: Mapped[list["Job"]] = relationship("Job", back_populates="city")
+
+
+class CatalogJobType(Base):
+    __tablename__ = "catalog_job_types"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    jobs: Mapped[list["Job"]] = relationship("Job", back_populates="job_type")
+
+
+class CatalogArea(Base):
+    __tablename__ = "catalog_areas"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    jobs: Mapped[list["Job"]] = relationship("Job", back_populates="area_catalog")
+
+
+class CatalogContractType(Base):
+    __tablename__ = "catalog_contract_types"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    jobs: Mapped[list["Job"]] = relationship("Job", back_populates="contract_type")
+
+
+# ---------------------------------------------------------------------------
 # jobs
 # ---------------------------------------------------------------------------
 class Job(Base):
@@ -87,8 +122,18 @@ class Job(Base):
         DateTime(timezone=False), server_default=func.now(), nullable=False
     )
 
+    # catalog FKs
+    city_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("catalog_cities.id", ondelete="SET NULL"), nullable=True, index=True)
+    job_type_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("catalog_job_types.id", ondelete="SET NULL"), nullable=True, index=True)
+    area_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("catalog_areas.id", ondelete="SET NULL"), nullable=True, index=True)
+    contract_type_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("catalog_contract_types.id", ondelete="SET NULL"), nullable=True, index=True)
+
     # relationships
     creator: Mapped[User | None] = relationship("User", back_populates="jobs")
+    city: Mapped[CatalogCity | None] = relationship("CatalogCity", back_populates="jobs")
+    job_type: Mapped[CatalogJobType | None] = relationship("CatalogJobType", back_populates="jobs")
+    area_catalog: Mapped[CatalogArea | None] = relationship("CatalogArea", back_populates="jobs")
+    contract_type: Mapped[CatalogContractType | None] = relationship("CatalogContractType", back_populates="jobs")
     requirements: Mapped[list[JobRequirement]] = relationship(
         "JobRequirement", back_populates="job", cascade="all, delete-orphan"
     )

@@ -11,6 +11,12 @@ from modules.areas.router import router as areas_router
 from modules.dashboard.router import router as dashboard_router
 from modules.ia.router import router as ia_router
 from modules.usuarios.router import router as usuarios_router
+from modules.catalogs.router import (
+    ciudades_router,
+    tipos_cargo_router,
+    areas_router as catalog_areas_router,
+    tipos_contrato_router,
+)
 
 app = FastAPI(
     title="CQ Talent Gateway API",
@@ -36,6 +42,10 @@ app.include_router(comentarios_router)
 app.include_router(areas_router)
 app.include_router(dashboard_router)
 app.include_router(ia_router)
+app.include_router(ciudades_router)
+app.include_router(tipos_cargo_router)
+app.include_router(catalog_areas_router)
+app.include_router(tipos_contrato_router)
 
 
 @app.get("/", tags=["health"])

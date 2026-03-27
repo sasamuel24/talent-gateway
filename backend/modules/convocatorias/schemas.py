@@ -7,6 +7,17 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 # ---------------------------------------------------------------------------
+# Catalog reference (embedded in job responses)
+# ---------------------------------------------------------------------------
+class CatalogRef(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    is_active: bool
+
+
+# ---------------------------------------------------------------------------
 # Job Requirements
 # ---------------------------------------------------------------------------
 class JobRequirementBase(BaseModel):
@@ -50,6 +61,10 @@ class JobBase(BaseModel):
     description: str | None = None
     status: str = Field(default="borrador", pattern="^(activa|borrador|cerrada)$")
     ai_prompt: str | None = None
+    city_id: int | None = None
+    job_type_id: int | None = None
+    area_id: int | None = None
+    contract_type_id: int | None = None
 
 
 class JobCreate(JobBase):
@@ -67,6 +82,10 @@ class JobUpdate(BaseModel):
     description: str | None = None
     status: str | None = Field(default=None, pattern="^(activa|borrador|cerrada)$")
     ai_prompt: str | None = None
+    city_id: int | None = None
+    job_type_id: int | None = None
+    area_id: int | None = None
+    contract_type_id: int | None = None
 
 
 class JobListResponse(BaseModel):
@@ -85,6 +104,14 @@ class JobListResponse(BaseModel):
     ai_prompt: str | None
     created_at: datetime
     candidates_count: int = 0
+    city_id: int | None = None
+    job_type_id: int | None = None
+    area_id: int | None = None
+    contract_type_id: int | None = None
+    city: CatalogRef | None = None
+    job_type: CatalogRef | None = None
+    area_catalog: CatalogRef | None = None
+    contract_type: CatalogRef | None = None
 
 
 class JobResponse(JobBase):
@@ -95,3 +122,7 @@ class JobResponse(JobBase):
     created_by: uuid.UUID | None
     created_at: datetime
     requirements: list[JobRequirementResponse] = []
+    city: CatalogRef | None = None
+    job_type: CatalogRef | None = None
+    area_catalog: CatalogRef | None = None
+    contract_type: CatalogRef | None = None

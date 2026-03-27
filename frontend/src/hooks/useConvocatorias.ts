@@ -3,6 +3,12 @@ import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from '@/lib/api'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface CatalogRef {
+  id: number
+  name: string
+  is_active: boolean
+}
+
 export interface JobListItem {
   id: string
   title: string
@@ -17,6 +23,16 @@ export interface JobListItem {
   ai_prompt: string | null
   candidates_count: number
   created_at: string
+  // Catalog FK ids
+  city_id: number | null
+  job_type_id: number | null
+  area_id: number | null
+  contract_type_id: number | null
+  // Catalog objects
+  city: CatalogRef | null
+  job_type: CatalogRef | null
+  area_catalog: CatalogRef | null
+  contract_type: CatalogRef | null
 }
 
 export interface JobRequirement {
@@ -37,10 +53,14 @@ export interface JobDetail extends JobListItem {
 
 export interface JobCreatePayload {
   title: string
-  area: string
-  location: string
+  area?: string
+  location?: string
   department?: string
-  type: string
+  type?: string
+  area_id?: number
+  city_id?: number
+  job_type_id?: number
+  contract_type_id?: number
   status: 'borrador' | 'activa'
   description: string
   ref_id?: string
