@@ -12,7 +12,7 @@ export interface CatalogItem {
 function useCatalogList(endpoint: string, key: string) {
   return useQuery<CatalogItem[]>({
     queryKey: ['catalogs', key],
-    queryFn: () => apiGet<CatalogItem[]>(`/api/v1/catalogs/${endpoint}/`),
+    queryFn: () => apiGet<CatalogItem[]>(`/api/v1/catalogs/${endpoint}`),
   })
 }
 
@@ -20,7 +20,7 @@ function useCatalogCreate(endpoint: string, key: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (name: string) =>
-      apiPost<CatalogItem>(`/api/v1/catalogs/${endpoint}/`, { name }),
+      apiPost<CatalogItem>(`/api/v1/catalogs/${endpoint}`, { name }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['catalogs', key] }),
   })
 }
