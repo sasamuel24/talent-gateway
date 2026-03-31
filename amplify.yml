@@ -7,7 +7,9 @@ frontend:
         - npm install
     build:
       commands:
+        - echo "=== VITE_API_URL en sistema ===" && echo $VITE_API_URL
         - echo "VITE_API_URL=https://lxoa1s2e49.execute-api.us-east-2.amazonaws.com" > .env
+        - cat .env
         - npm run build
   artifacts:
     baseDirectory: frontend/dist
