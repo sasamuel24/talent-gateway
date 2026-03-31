@@ -22,6 +22,7 @@ app = FastAPI(
     title="CQ Talent Gateway API",
     description="API backend para el portal de seleccion de Cafe Quindio",
     version="1.0.0",
+    redirect_slashes=False,
 )
 
 app.add_middleware(
