@@ -78,7 +78,7 @@ export default function AdminConvocatorias() {
   // Compute unique areas dynamically from the fetched list
   const areas = useMemo(() => {
     const unique = Array.from(
-      new Set(jobs.map((j) => j.area).filter((a): a is string => Boolean(a)))
+      new Set(jobs.map((j) => j.area_catalog?.name).filter((a): a is string => Boolean(a)))
     ).sort();
     return ["Todas", ...unique];
   }, [jobs]);
@@ -89,7 +89,7 @@ export default function AdminConvocatorias() {
       (j.ref_id ?? "").toLowerCase().includes(search.toLowerCase());
     const matchStatus =
       statusFilter === "todas" || j.status === statusFilter;
-    const matchArea = areaFilter === "Todas" || j.area === areaFilter;
+    const matchArea = areaFilter === "Todas" || j.area_catalog?.name === areaFilter;
     return matchSearch && matchStatus && matchArea;
   });
 
@@ -270,7 +270,7 @@ export default function AdminConvocatorias() {
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                       <div>
-                        <p>{job.area ?? "—"}</p>
+                        <p>{job.area_catalog?.name ?? "—"}</p>
                         <p className="text-xs">{job.department ?? ""}</p>
                       </div>
                     </TableCell>

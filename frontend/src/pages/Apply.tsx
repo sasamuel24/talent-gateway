@@ -542,12 +542,6 @@ const Step5 = ({ jobId, jobTitle, navigate }: Step5Props) => (
 
     <div className="flex flex-wrap items-center justify-center gap-3">
       <button
-        onClick={() => navigate(`/vacante/${jobId}`)}
-        className="px-5 py-2 border border-border rounded text-sm font-body font-medium text-foreground hover:border-primary hover:text-primary transition-colors transition-all duration-200 active:scale-95"
-      >
-        Crear perfil
-      </button>
-      <button
         onClick={() => navigate("/")}
         className="px-5 py-2 border border-border rounded text-sm font-body font-medium text-foreground hover:border-primary hover:text-primary transition-colors transition-all duration-200 active:scale-95"
       >

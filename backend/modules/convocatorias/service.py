@@ -72,6 +72,11 @@ class JobService:
         await self.repository.delete(job_id)
         logger.info("Convocatoria eliminada: %s", job_id)
 
+    async def delete_all_requirements(self, job_id: uuid.UUID) -> None:
+        await self.get_job(job_id)
+        await self.repository.delete_all_requirements(job_id)
+        logger.info("Requisitos eliminados para convocatoria: %s", job_id)
+
     async def add_requirement(
         self, job_id: uuid.UUID, data: JobRequirementCreate
     ) -> JobRequirementResponse:

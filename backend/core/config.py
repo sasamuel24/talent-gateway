@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     # Anthropic Claude
     ANTHROPIC_API_KEY: str = ""
 
+    # Azure AD / Microsoft Graph — Email
+    AZURE_TENANT_ID: str = ""
+    AZURE_CLIENT_ID: str = ""
+    AZURE_CLIENT_SECRET: str = ""
+    EMAIL_FROM: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

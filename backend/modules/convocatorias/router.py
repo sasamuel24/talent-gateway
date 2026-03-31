@@ -78,6 +78,20 @@ async def delete_job(
     await service.delete_job(job_id)
 
 
+@router.delete(
+    "/{job_id}/requirements",
+    status_code=http_status.HTTP_204_NO_CONTENT,
+    response_model=None,
+)
+async def delete_all_requirements(
+    job_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+    _: Annotated[str, Depends(get_current_user)] = None,
+) -> None:
+    service = JobService(db)
+    await service.delete_all_requirements(job_id)
+
+
 @router.post(
     "/{job_id}/requirements",
     response_model=JobRequirementResponse,

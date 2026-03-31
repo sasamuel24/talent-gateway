@@ -8,6 +8,7 @@ from fastapi import status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.dependencies import get_current_user, get_db
+from core.email import send_application_confirmation
 from db.session import AsyncSessionLocal
 from modules.aplicaciones.schemas import (
     ApplicationCreate,
@@ -68,6 +69,12 @@ async def create_application(
     app = await service.create_application(data)
     await db.commit()  # commit antes del background task para evitar race condition
     background_tasks.add_task(_run_ai_analysis, uuid.UUID(str(app.id)))
+    background_tasks.add_task(
+        send_application_confirmation,
+        candidate_email=app.candidate.email,
+        candidate_name=app.candidate.name,
+        job_title=app.job.title,
+    )
     return app
 
 

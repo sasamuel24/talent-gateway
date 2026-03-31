@@ -52,7 +52,11 @@
       "Bash(echo \"exit:$?\")",
       "Bash(find C:/desarollos/talent-gateway/backend/modules/aplicaciones -name \"*.pyc\" -delete)",
       "Read(//c/desarollos/**)",
-      "Bash(cmd /c \"taskkill /F /PID 26796 2>&1 & taskkill /F /PID 31136 2>&1 & taskkill /F /PID 3412 2>&1\")"
+      "Bash(cmd /c \"taskkill /F /PID 26796 2>&1 & taskkill /F /PID 31136 2>&1 & taskkill /F /PID 3412 2>&1\")",
+      "Bash(find /c/desarollos/talent-gateway/frontend -maxdepth 2 -type f -name *.tsx -o -name *.ts)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"sendgrid\\\\|smtplib\\\\|email\\\\|mail\" /c/desarollos/talent-gateway/backend --include=*.py)",
+      "Bash(xargs cat:*)"
     ]
   }
 }

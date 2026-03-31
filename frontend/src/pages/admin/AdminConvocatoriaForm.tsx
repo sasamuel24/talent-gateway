@@ -36,12 +36,13 @@ import {
   useCreateConvocatoria,
   useUpdateConvocatoria,
 } from "@/hooks/useConvocatorias";
-import { useAreasAdmin, useCiudades } from "@/hooks/useCatalogs";
+import { useAreasAdmin, useCiudades, useTiposContrato } from "@/hooks/useCatalogs";
 
 const formSchema = z.object({
   title: z.string().min(5, "El título debe tener al menos 5 caracteres"),
   area_id: z.number({ required_error: "Selecciona un área" }).positive("Selecciona un área"),
   city_id: z.number({ required_error: "Selecciona una ciudad" }).positive("Selecciona una ciudad"),
+  contract_type_id: z.number().positive("Selecciona un tipo de contrato").optional(),
   status: z.enum(["borrador", "activa"]),
   description: z
     .string()
@@ -68,6 +69,7 @@ export default function AdminConvocatoriaForm() {
   const { data: existingJob, isLoading: isLoadingJob } = useConvocatoria(id);
   const { data: areas = [] } = useAreasAdmin();
   const { data: ciudades = [] } = useCiudades();
+  const { data: tiposContrato = [] } = useTiposContrato();
   const createMutation = useCreateConvocatoria();
   const updateMutation = useUpdateConvocatoria();
 
@@ -79,6 +81,7 @@ export default function AdminConvocatoriaForm() {
       title: "",
       area_id: 0,
       city_id: 0,
+      contract_type_id: undefined,
       status: "borrador",
       description: "",
       requirements: [{ value: "" }],
@@ -104,6 +107,7 @@ export default function AdminConvocatoriaForm() {
         title: existingJob.title,
         area_id: existingJob.area_id ?? 0,
         city_id: existingJob.city_id ?? 0,
+        contract_type_id: existingJob.contract_type_id ?? undefined,
         status:
           existingJob.status === "cerrada" ? "borrador" : existingJob.status,
         description: existingJob.description ?? "",
@@ -122,6 +126,7 @@ export default function AdminConvocatoriaForm() {
       title: values.title,
       area_id: values.area_id,
       city_id: values.city_id,
+      contract_type_id: values.contract_type_id,
       status: finalStatus,
       description: values.description,
       ai_prompt: values.aiPrompt,
@@ -303,30 +308,60 @@ export default function AdminConvocatoriaForm() {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem className="sm:max-w-[50%]">
-                      <FormLabel>Estado inicial</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Estado" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="borrador">Borrador</SelectItem>
-                          <SelectItem value="activa">Activa</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="contract_type_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de contrato</FormLabel>
+                        <Select
+                          onValueChange={(v) => field.onChange(Number(v))}
+                          value={field.value ? String(field.value) : ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar tipo" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {tiposContrato.filter((t) => t.is_active).map((t) => (
+                              <SelectItem key={t.id} value={String(t.id)}>
+                                {t.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estado inicial</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Estado" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="borrador">Borrador</SelectItem>
+                            <SelectItem value="activa">Activa</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </CardContent>
             </Card>
 

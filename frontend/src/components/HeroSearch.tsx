@@ -1,5 +1,5 @@
 import { Search, MapPin } from "lucide-react";
-import heroCoffee from "@/assets/hero-coffee.jpg";
+import heroCoffee from "@/assets/hero-portada.jpg";
 
 interface HeroSearchProps {
   keyword: string;

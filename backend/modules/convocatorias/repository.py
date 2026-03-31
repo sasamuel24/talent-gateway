@@ -122,6 +122,12 @@ class JobRepository:
         await self.db.refresh(job, ["requirements", "city", "job_type", "area_catalog", "contract_type"])
         return job
 
+    async def delete_all_requirements(self, job_id: uuid.UUID) -> None:
+        from sqlalchemy import delete
+        from db.models import JobRequirement as JobReq
+        await self.db.execute(delete(JobReq).where(JobReq.job_id == job_id))
+        await self.db.flush()
+
     async def add_requirement(self, job_id: uuid.UUID, data: dict) -> JobRequirement:
         req = JobRequirement(job_id=job_id, **data)
         self.db.add(req)

@@ -85,7 +85,10 @@ const JobDetail = () => {
   const funciones = job.requirements.filter((r) => r.type === "funcion");
   const requisitos = job.requirements.filter((r) => r.type === "requisito");
   const perfilIdeal = job.requirements.filter((r) => r.type === "perfil_ideal");
-  const locationStr = [job.location, job.department].filter(Boolean).join(", ");
+  const cityStr = job.city?.name ?? job.location;
+  const locationStr = [cityStr, job.department].filter(Boolean).join(", ");
+  const areaStr = job.area_catalog?.name ?? job.area;
+  const contractStr = job.contract_type?.name ?? job.type;
 
   return (
     <Layout>
@@ -93,7 +96,7 @@ const JobDetail = () => {
       <div className="bg-gradient-to-br from-primary to-primary/80 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <p className="text-xs uppercase tracking-brand text-white/70 font-heading font-semibold mb-2">
-            {[job.area, job.ref_id].filter(Boolean).join(" · ")}
+            {[areaStr, job.ref_id].filter(Boolean).join(" · ")}
           </p>
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold uppercase tracking-wide leading-tight">
             {job.title}
@@ -105,10 +108,10 @@ const JobDetail = () => {
                 {locationStr}
               </span>
             )}
-            {job.type && (
+            {contractStr && (
               <span className="flex items-center gap-1">
                 <Briefcase className="h-4 w-4" />
-                {job.type}
+                {contractStr}
               </span>
             )}
             {job.date_posted && (

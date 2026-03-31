@@ -156,8 +156,9 @@ export function useUpdateConvocatoria() {
       // Step 1: update the job
       const job = await apiPut<JobDetail>(`/api/v1/convocatorias/${id}`, payload)
 
-      // Step 2 (optional): re-create requirements if provided
+      // Step 2: reemplazar requisitos — borrar todos los existentes y reinsertar
       if (requirements && requirements.length > 0) {
+        await apiDelete(`/api/v1/convocatorias/${id}/requirements`)
         for (let i = 0; i < requirements.length; i++) {
           const req = requirements[i]
           await apiPost(`/api/v1/convocatorias/${id}/requirements`, {
