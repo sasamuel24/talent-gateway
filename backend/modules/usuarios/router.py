@@ -13,7 +13,7 @@ from modules.usuarios.service import UserService
 router = APIRouter(prefix="/api/v1/usuarios", tags=["usuarios"])
 
 
-@router.get("/", response_model=list[UserResponse])
+@router.get("", response_model=list[UserResponse])
 async def list_users(
     skip: int = 0,
     limit: int = 100,
@@ -24,7 +24,7 @@ async def list_users(
     return await service.list_users(skip=skip, limit=limit)
 
 
-@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     data: UserCreate,
     db: Annotated[AsyncSession, Depends(get_db)] = None,

@@ -12,7 +12,7 @@ from modules.areas.service import AreaService
 router = APIRouter(prefix="/api/v1/areas", tags=["areas"])
 
 
-@router.get("/", response_model=list[str])
+@router.get("", response_model=list[str])
 async def list_areas(
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ) -> list[str]:

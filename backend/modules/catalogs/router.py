@@ -13,14 +13,14 @@ from modules.catalogs.service import CatalogService
 def make_catalog_router(prefix: str, model, tag: str) -> APIRouter:
     router = APIRouter(prefix=f"/api/v1/catalogs/{prefix}", tags=[tag])
 
-    @router.get("/", response_model=list[CatalogItemResponse])
+    @router.get("", response_model=list[CatalogItemResponse])
     async def list_items(
         active_only: bool = False,
         db: Annotated[AsyncSession, Depends(get_db)] = None,
     ) -> list[CatalogItemResponse]:
         return await CatalogService(db, model).list_items(active_only=active_only)
 
-    @router.post("/", response_model=CatalogItemResponse, status_code=http_status.HTTP_201_CREATED)
+    @router.post("", response_model=CatalogItemResponse, status_code=http_status.HTTP_201_CREATED)
     async def create_item(
         data: CatalogItemCreate,
         db: Annotated[AsyncSession, Depends(get_db)] = None,

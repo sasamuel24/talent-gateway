@@ -35,7 +35,7 @@ async def _run_ai_analysis(application_id: uuid.UUID) -> None:
 router = APIRouter(prefix="/api/v1/aplicaciones", tags=["aplicaciones"])
 
 
-@router.get("/", response_model=list[ApplicationFullResponse])
+@router.get("", response_model=list[ApplicationFullResponse])
 async def list_applications(
     skip: int = 0,
     limit: int = 100,
@@ -56,7 +56,7 @@ async def list_applications(
 
 
 @router.post(
-    "/",
+    "",
     response_model=ApplicationFullResponse,
     status_code=http_status.HTTP_201_CREATED,
 )

@@ -21,7 +21,7 @@ from modules.convocatorias.service import JobService
 router = APIRouter(prefix="/api/v1/convocatorias", tags=["convocatorias"])
 
 
-@router.get("/", response_model=list[JobListResponse])
+@router.get("", response_model=list[JobListResponse])
 async def list_jobs(
     skip: int = 0,
     limit: int = 100,
@@ -38,7 +38,7 @@ async def list_jobs(
     )
 
 
-@router.post("/", response_model=JobResponse, status_code=http_status.HTTP_201_CREATED)
+@router.post("", response_model=JobResponse, status_code=http_status.HTTP_201_CREATED)
 async def create_job(
     data: JobCreate,
     db: Annotated[AsyncSession, Depends(get_db)] = None,

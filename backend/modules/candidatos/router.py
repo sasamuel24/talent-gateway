@@ -27,7 +27,7 @@ router = APIRouter(prefix="/api/v1/candidatos", tags=["candidatos"])
 
 # ── Public endpoints (no auth required) ────────────────────────────────────
 
-@router.post("/", response_model=CandidateResponse, status_code=http_status.HTTP_201_CREATED)
+@router.post("", response_model=CandidateResponse, status_code=http_status.HTTP_201_CREATED)
 async def create_candidate(
     data: CandidateCreate,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
@@ -81,7 +81,7 @@ async def add_language(
 
 # ── Protected endpoints (admin only) ───────────────────────────────────────
 
-@router.get("/", response_model=list[CandidateResponse])
+@router.get("", response_model=list[CandidateResponse])
 async def list_candidates(
     skip: int = 0,
     limit: int = 100,
