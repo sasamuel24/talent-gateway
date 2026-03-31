@@ -32,7 +32,7 @@ interface AuthContextValue extends AuthState {
 
 const TOKEN_KEY = "cq_admin_token";
 const USER_KEY = "cq_admin_user";
-const API_BASE = "http://localhost:8080/api/v1";
+const API_BASE = `${import.meta.env.VITE_API_URL ?? 'http://localhost:8080'}/api/v1`;
 
 /**
  * Decodes the JWT payload and returns the `exp` field (Unix timestamp).

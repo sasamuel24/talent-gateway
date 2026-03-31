@@ -553,7 +553,7 @@ const Step5 = ({ jobId, jobTitle, navigate }: Step5Props) => (
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-const BASE_URL = 'http://localhost:8080'
+const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 
 const Apply = () => {
   const { id } = useParams();
