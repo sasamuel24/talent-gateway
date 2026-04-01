@@ -135,7 +135,7 @@ const JobDetail = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in pb-20 sm:pb-0">
         <Link
           to="/"
           className="inline-flex items-center gap-1 text-xs text-primary hover:underline mb-8 font-heading font-semibold uppercase tracking-brand"
@@ -282,6 +282,20 @@ const JobDetail = () => {
             Sube tu CV
           </button>
         </div>
+      </div>
+
+      {/* Sticky bottom CTA — solo móvil */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-t border-border px-4 py-3 flex items-center gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-body font-semibold text-foreground truncate">{job.title}</p>
+          <p className="text-[11px] font-body text-muted-foreground">{job.city?.name ?? job.location ?? "—"}</p>
+        </div>
+        <button
+          onClick={() => navigate(`/vacante/${job.id}/aplicar`)}
+          className="shrink-0 px-5 py-2.5 bg-primary text-white text-xs font-heading font-bold uppercase tracking-wide rounded-full hover:bg-primary/90 active:scale-95 transition-all duration-200 shadow-sm shadow-primary/20"
+        >
+          Postularme
+        </button>
       </div>
     </Layout>
   );

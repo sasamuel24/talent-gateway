@@ -8,6 +8,12 @@ const contractColor: Record<string, string> = {
   "Practicante": "bg-secondary text-secondary-foreground",
 };
 
+const isNew = (dateStr: string | null): boolean => {
+  if (!dateStr) return false;
+  const diff = Date.now() - new Date(dateStr).getTime();
+  return diff < 7 * 24 * 60 * 60 * 1000;
+};
+
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
   const d = new Date(dateStr);
@@ -28,7 +34,12 @@ const JobCard = ({ job }: { job: JobListItem }) => {
       className="animate-slide-up block bg-card border-l-4 border-l-transparent border border-border rounded-lg px-5 py-4 hover:bg-job-hover hover:border-l-primary hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
     >
       <div className="flex items-start justify-between gap-3 mb-2">
-        <h3 className="text-sm font-heading font-bold text-job-link group-hover:underline uppercase tracking-wide leading-snug">
+        <h3 className="text-sm font-heading font-bold text-job-link group-hover:underline uppercase tracking-wide leading-snug flex items-center flex-wrap gap-1">
+          {isNew(job.date_posted) && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-heading font-bold uppercase bg-emerald-50 text-emerald-600 border border-emerald-200 mr-2 shrink-0">
+              Nueva
+            </span>
+          )}
           {job.title}
         </h3>
         {contractLabel && (
@@ -54,6 +65,11 @@ const JobCard = ({ job }: { job: JobListItem }) => {
           <span className="flex items-center gap-1">
             <Calendar className="h-3.5 w-3.5 text-primary/60" />
             {formatDate(job.date_posted)}
+          </span>
+        )}
+        {(job.candidates_count ?? 0) > 0 && (
+          <span className="text-xs font-body text-muted-foreground">
+            · {job.candidates_count} {job.candidates_count === 1 ? "aplicante" : "aplicantes"}
           </span>
         )}
       </div>
