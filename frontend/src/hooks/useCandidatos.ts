@@ -70,7 +70,7 @@ export function useAplicaciones(filters?: ApplicationFilters) {
   params.set('limit', '100')
 
   const query = params.toString()
-  const path = `/api/v1/aplicaciones/${query ? `?${query}` : ''}`
+  const path = `/api/v1/aplicaciones${query ? `?${query}` : ''}`
 
   return useQuery<ApplicationFull[]>({
     queryKey: ['aplicaciones', filters],
