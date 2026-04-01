@@ -56,9 +56,6 @@ const JobList = ({ keyword, location, filters }: JobListProps) => {
           Vacantes Disponibles
         </h2>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-body text-muted-foreground bg-muted px-3 py-1 rounded-full">
-            {sorted.length} {sorted.length === 1 ? "posición" : "posiciones"}
-          </span>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'reciente' | 'az')}
