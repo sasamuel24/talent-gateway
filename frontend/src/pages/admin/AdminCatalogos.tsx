@@ -62,13 +62,15 @@ export default function AdminCatalogos() {
         </div>
 
         <Tabs defaultValue="ciudades">
-          <TabsList className="w-full sm:w-auto">
-            {TABS.map((t) => (
-              <TabsTrigger key={t.value} value={t.value} className="text-xs">
-                {t.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="overflow-x-auto scrollbar-none -mx-1 px-1">
+            <TabsList className="w-max sm:w-auto">
+              {TABS.map((t) => (
+                <TabsTrigger key={t.value} value={t.value} className="text-xs whitespace-nowrap">
+                  {t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           {/* Ciudades */}
           <TabsContent value="ciudades" className="mt-4">

@@ -122,6 +122,13 @@
   .animate-ping-slow {
     animation: pingSlow 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
   }
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @keyframes fadeIn {
