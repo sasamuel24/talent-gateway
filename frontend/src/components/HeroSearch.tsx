@@ -42,7 +42,7 @@ const HeroSearch = ({ keyword, location, onKeywordChange, onLocationChange, onSe
         </p>
 
         {/* Search bar */}
-        <div className="w-full max-w-3xl bg-white/95 backdrop-blur-sm rounded-full shadow-2xl flex flex-col sm:flex-row overflow-hidden border border-white/20">
+        <div className="w-full max-w-3xl bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-full shadow-2xl flex flex-col sm:flex-row overflow-hidden border border-white/20">
           <div className="flex-1 flex items-center gap-2 px-5 py-3.5 border-b sm:border-b-0 sm:border-r border-gray-200">
             <Search className="h-4 w-4 text-primary shrink-0" />
             <input
@@ -67,7 +67,7 @@ const HeroSearch = ({ keyword, location, onKeywordChange, onLocationChange, onSe
           </div>
           <button
             onClick={onSearch}
-            className="bg-primary text-white px-8 py-3.5 text-xs font-heading font-bold hover:bg-primary/90 transition-colors uppercase tracking-brand rounded-r-full sm:rounded-l-none rounded-l-full sm:rounded-l-none active:scale-95 transition-all duration-200"
+            className="bg-primary text-white px-8 py-4 sm:py-3.5 text-xs font-heading font-bold hover:bg-primary/90 uppercase tracking-brand rounded-b-2xl sm:rounded-none sm:rounded-r-full active:scale-95 transition-all duration-200"
           >
             Buscar
           </button>
