@@ -513,43 +513,130 @@ const Step4 = ({
 interface Step5Props {
   jobId: string;
   jobTitle: string;
+  candidateName: string;
   navigate: (path: string) => void;
 }
 
-const Step5 = ({ jobId, jobTitle, navigate }: Step5Props) => (
-  <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
-    {/* Document icon with checkmark */}
-    <div className="relative mb-6">
-      <div className="w-24 h-28 border-2 border-muted-foreground/30 rounded-lg flex items-center justify-center bg-white shadow-sm">
-        <CheckCircle className="h-10 w-10 text-green-500" />
+const Step5 = ({ jobId, jobTitle, candidateName, navigate }: Step5Props) => {
+  const firstName = candidateName.split(' ')[0];
+
+  return (
+    <div className="animate-fade-in min-h-[520px] flex flex-col items-center px-4 pt-8 pb-12 text-center">
+
+      {/* ── Icono animado ── */}
+      <div className="relative flex items-center justify-center mb-8">
+        {/* Pulso exterior */}
+        <div className="absolute w-32 h-32 rounded-full bg-primary/10 animate-ping-slow" />
+        {/* Anillo medio */}
+        <div className="absolute w-24 h-24 rounded-full bg-primary/15" />
+        {/* Círculo sólido */}
+        <div className="relative w-20 h-20 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+          <CheckCircle className="h-10 w-10 text-white" strokeWidth={2.5} />
+        </div>
+        {/* Partícula decorativa — arriba derecha */}
+        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent/70" />
+        {/* Partícula decorativa — abajo izquierda */}
+        <div className="absolute -bottom-1 -left-2 w-3 h-3 rounded-full bg-primary/40" />
       </div>
-      {/* Fringe lines at bottom */}
-      <div className="flex justify-center gap-1 mt-1">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="w-0.5 bg-muted-foreground/30" style={{ height: `${10 + (i % 2) * 4}px` }} />
+
+      {/* ── Encabezado personalizado ── */}
+      <div className="mb-6 animate-slide-up" style={{ animationDelay: '0.1s', animationFillMode: 'both', opacity: 0 }}>
+        <h2 className="text-2xl sm:text-3xl font-heading font-bold text-foreground leading-tight mb-2">
+          ¡Felicitaciones,<br className="sm:hidden" /> {firstName}!
+        </h2>
+        <p className="text-sm font-body text-muted-foreground">
+          Tu solicitud fue enviada exitosamente
+        </p>
+      </div>
+
+      {/* ── Badge de vacante ── */}
+      <div
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-primary/20 mb-8 max-w-[280px] animate-slide-up"
+        style={{ animationDelay: '0.2s', animationFillMode: 'both', opacity: 0 }}
+      >
+        <FileText className="h-4 w-4 text-primary shrink-0" />
+        <span className="text-sm font-body font-medium text-primary truncate">{jobTitle}</span>
+      </div>
+
+      {/* ── Línea divisora con texto ── */}
+      <div
+        className="flex items-center gap-3 w-full max-w-sm mb-6 animate-slide-up"
+        style={{ animationDelay: '0.3s', animationFillMode: 'both', opacity: 0 }}
+      >
+        <div className="flex-1 h-px bg-border" />
+        <span className="text-xs font-body font-semibold text-muted-foreground uppercase tracking-widest whitespace-nowrap">
+          ¿Qué sigue?
+        </span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
+      {/* ── Pasos siguientes ── */}
+      <div className="w-full max-w-sm space-y-4 mb-8 text-left">
+        {[
+          {
+            num: '01',
+            title: 'Revisamos tu perfil',
+            desc: 'Nuestro equipo evaluará tu hoja de vida en las próximas 48 horas hábiles.',
+            delay: '0.35s',
+          },
+          {
+            num: '02',
+            title: 'Te contactamos',
+            desc: 'Si tu perfil es seleccionado, recibirás un correo con los próximos pasos.',
+            delay: '0.45s',
+          },
+          {
+            num: '03',
+            title: 'Entrevista',
+            desc: '¡Queremos conocer tu talento! Tendrás una entrevista con nuestro equipo.',
+            delay: '0.55s',
+          },
+        ].map(({ num, title, desc, delay }) => (
+          <div
+            key={num}
+            className="flex gap-4 items-start animate-slide-up"
+            style={{ animationDelay: delay, animationFillMode: 'both', opacity: 0 }}
+          >
+            <div className="shrink-0 w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <span className="text-xs font-heading font-bold text-primary">{num}</span>
+            </div>
+            <div className="pt-0.5">
+              <p className="text-sm font-body font-semibold text-foreground leading-tight">{title}</p>
+              <p className="text-xs font-body text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>
+            </div>
+          </div>
         ))}
       </div>
-      <div className="w-6 h-1.5 bg-green-400/40 rounded-full mx-auto mt-0.5 blur-sm" />
-    </div>
 
-    <h2 className="text-2xl font-heading font-bold text-foreground mb-2">¡Gracias!</h2>
-    <p className="text-sm font-body text-muted-foreground mb-6">
-      Usted ha presentado solicitud exitosamente para{" "}
-      <Link to={`/vacante/${jobId}`} className="text-primary hover:underline font-medium">
-        {jobTitle}
-      </Link>
-    </p>
-
-    <div className="flex flex-wrap items-center justify-center gap-3">
-      <button
-        onClick={() => navigate("/")}
-        className="px-5 py-2 border border-border rounded text-sm font-body font-medium text-foreground hover:border-primary hover:text-primary transition-colors transition-all duration-200 active:scale-95"
+      {/* ── CTAs ── */}
+      <div
+        className="w-full max-w-sm flex flex-col sm:flex-row gap-3 animate-slide-up"
+        style={{ animationDelay: '0.65s', animationFillMode: 'both', opacity: 0 }}
       >
-        Regresar a la búsqueda
-      </button>
+        <button
+          onClick={() => navigate('/')}
+          className="flex-1 px-5 py-3 rounded-full bg-primary text-white text-sm font-body font-bold hover:bg-primary/90 transition-all duration-200 active:scale-95 shadow-md shadow-primary/20"
+        >
+          Explorar más vacantes
+        </button>
+        <Link
+          to={`/vacante/${jobId}`}
+          className="flex-1 px-5 py-3 rounded-full border border-border text-sm font-body font-medium text-foreground hover:border-primary hover:text-primary transition-all duration-200 active:scale-95 text-center"
+        >
+          Ver la vacante
+        </Link>
+      </div>
+
+      {/* ── Footer branding ── */}
+      <p
+        className="mt-8 text-xs font-body text-muted-foreground/60 animate-fade-in"
+        style={{ animationDelay: '0.8s', animationFillMode: 'both', opacity: 0 }}
+      >
+        Café Quindío — Portal de Talento
+      </p>
     </div>
-  </div>
-);
+  );
+};
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
@@ -950,6 +1037,7 @@ const Apply = () => {
               <Step5
                 jobId={job.id}
                 jobTitle={job.title}
+                candidateName={`${firstName} ${lastName}`.trim()}
                 navigate={navigate}
               />
             )}
