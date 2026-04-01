@@ -97,37 +97,42 @@ const Navbar = () => {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-border bg-white/95 backdrop-blur-md px-4 py-4 space-y-3">
-          {navLinks.map((item) =>
-            item.internal ? (
-              <Link
-                key={item.label}
-                to={item.href}
-                onClick={() => setMobileOpen(false)}
-                className="block text-sm font-heading uppercase tracking-brand text-muted-foreground hover:text-primary transition-colors"
-              >
-                {item.label}
-              </Link>
-            ) : (
-              <a
-                key={item.label}
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block text-sm font-heading uppercase tracking-brand text-muted-foreground hover:text-primary transition-colors"
-              >
-                {item.label}
-              </a>
-            )
-          )}
-          <a
-            href="https://www.cafequindio.com.co"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center px-5 py-2 bg-primary text-white text-xs font-heading font-bold uppercase tracking-brand rounded-full hover:bg-primary/90 transition-colors mt-2"
-          >
-            Tienda Online
-          </a>
+        <div className="md:hidden border-t border-primary/20 bg-white animate-slide-up">
+          {/* Nav links */}
+          <div className="px-6 pt-2 pb-4">
+            {navLinks.map((item, i) => {
+              const isActive = item.internal && location.pathname === item.href;
+              const cls =
+                `flex items-center justify-between py-4 font-heading text-sm uppercase tracking-brand transition-colors duration-200 border-b border-border/40 last:border-0 ` +
+                (isActive ? "text-primary" : "text-foreground/70 hover:text-primary");
+              return item.internal ? (
+                <Link key={item.label} to={item.href} onClick={() => setMobileOpen(false)} className={cls}>
+                  <span>{item.label}</span>
+                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                </Link>
+              ) : (
+                <a key={item.label} href={item.href} target="_blank" rel="noopener noreferrer" className={cls}>
+                  <span>{item.label}</span>
+                  <svg className="h-3 w-3 text-muted-foreground/50" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+                </a>
+              );
+            })}
+          </div>
+
+          {/* CTA */}
+          <div className="px-6 pb-6">
+            <a
+              href="https://www.cafequindio.com.co"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-3.5 bg-primary text-white text-xs font-heading font-bold uppercase tracking-brand rounded-xl hover:bg-primary/90 active:scale-95 transition-all duration-200 shadow-sm shadow-primary/20"
+            >
+              Tienda Online
+            </a>
+            <p className="text-center text-[10px] font-body text-muted-foreground/50 mt-4 tracking-wide">
+              Café Quindío — Portal de Talento
+            </p>
+          </div>
         </div>
       )}
     </nav>
