@@ -20,6 +20,7 @@ import {
   Bot,
   Send,
   Trash2,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -491,7 +492,15 @@ export default function AdminCandidatos() {
           {selectedCandidate && (
             <>
               {/* Sticky header */}
-              <div className="sticky top-0 z-10 bg-white border-b border-border px-6 pt-6 pb-4">
+              <div className="sticky top-0 z-10 bg-white border-b border-border px-6 pt-4 pb-4">
+                {/* Botón volver — visible solo en móvil */}
+                <button
+                  onClick={() => setSelectedCandidate(null)}
+                  className="sm:hidden flex items-center gap-1.5 text-xs font-body text-muted-foreground hover:text-primary transition-colors mb-3"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Volver
+                </button>
                 <SheetHeader>
                   <SheetTitle className="font-heading text-lg leading-tight">
                     {selectedCandidate.candidate.name}
