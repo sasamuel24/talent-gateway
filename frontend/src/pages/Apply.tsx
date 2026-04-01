@@ -728,7 +728,7 @@ const Apply = () => {
       }
 
       // i) Create application
-      const appRes = await fetch(`${BASE_URL}/api/v1/aplicaciones/`, {
+      const appRes = await fetch(`${BASE_URL}/api/v1/aplicaciones`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
