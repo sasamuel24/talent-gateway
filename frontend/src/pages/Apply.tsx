@@ -405,7 +405,10 @@ const Step4 = ({
 
     {/* Experiencia */}
     <div>
-      <h3 className="text-base font-heading font-bold text-foreground mb-2">Experiencia</h3>
+      <h3 className="text-base font-heading font-bold text-foreground mb-1">
+        Experiencia<span className="text-destructive ml-0.5">*</span>
+      </h3>
+      {errors.experiencias && <p className="text-xs text-destructive mb-2">{errors.experiencias}</p>}
       {experiencias.map((exp) => (
         <div key={exp.id} className="border border-border rounded-lg p-4 mb-4 bg-white space-y-4 hover:border-primary/40 transition-colors duration-200">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -441,7 +444,10 @@ const Step4 = ({
 
     {/* Educación */}
     <div>
-      <h3 className="text-base font-heading font-bold text-foreground mb-2">Educación</h3>
+      <h3 className="text-base font-heading font-bold text-foreground mb-1">
+        Educación<span className="text-destructive ml-0.5">*</span>
+      </h3>
+      {errors.educaciones && <p className="text-xs text-destructive mb-2">{errors.educaciones}</p>}
       {educaciones.map((edu) => (
         <div key={edu.id} className="border border-border rounded-lg p-4 mb-4 bg-white space-y-4 hover:border-primary/40 transition-colors duration-200">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -477,7 +483,10 @@ const Step4 = ({
 
     {/* Idioma */}
     <div>
-      <h3 className="text-base font-heading font-bold text-foreground mb-2">Idioma</h3>
+      <h3 className="text-base font-heading font-bold text-foreground mb-1">
+        Idioma<span className="text-destructive ml-0.5">*</span>
+      </h3>
+      {errors.idiomas && <p className="text-xs text-destructive mb-2">{errors.idiomas}</p>}
       {idiomas.map((idioma) => (
         <div key={idioma.id} className="border border-border rounded-lg p-4 mb-4 bg-white space-y-4 hover:border-primary/40 transition-colors duration-200">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -724,6 +733,9 @@ const Apply = () => {
     const errors: Record<string, string> = {};
     if (!cvFile) errors.cv = "El CV es requerido";
     if (!telefono.trim()) errors.telefono = "El teléfono es requerido";
+    if (experiencias.length === 0) errors.experiencias = "Debes agregar al menos una experiencia laboral";
+    if (educaciones.length === 0) errors.educaciones = "Debes agregar al menos un nivel de educación";
+    if (idiomas.length === 0) errors.idiomas = "Debes agregar al menos un idioma";
     setStep4Errors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -899,6 +911,16 @@ const Apply = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+        setStep4Errors((prev) => ({ ...prev, cv: "Solo se permiten archivos PDF" }));
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setStep4Errors((prev) => ({ ...prev, cv: "El archivo no puede superar 10 MB" }));
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
       setCvFile(file);
       setStep4Errors((prev) => ({ ...prev, cv: "" }));
     }
