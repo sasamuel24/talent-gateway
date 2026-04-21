@@ -275,7 +275,7 @@ export default function AdminDashboard() {
                               </p>
                             </TableCell>
                             <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
-                              {job.area ?? "—"}
+                              {job.area_catalog?.name ?? job.area ?? "—"}
                             </TableCell>
                             <TableCell>
                               <Badge

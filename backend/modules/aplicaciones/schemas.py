@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 # ---------------------------------------------------------------------------
@@ -76,6 +76,41 @@ class JobBasic(BaseModel):
 class ApplicationCreate(BaseModel):
     candidate_id: uuid.UUID
     job_id: uuid.UUID
+
+
+# ---------------------------------------------------------------------------
+# Atomic submit — crea candidato + perfil + aplicación en una sola llamada
+# ---------------------------------------------------------------------------
+class ExperienceSubmit(BaseModel):
+    position: str = Field(..., max_length=150)
+    company: str = Field(..., max_length=150)
+    start_date: date | None = None
+    end_date: date | None = None
+    details: str | None = None
+
+
+class EducationSubmit(BaseModel):
+    degree: str | None = Field(default=None, max_length=100)
+    institution: str | None = Field(default=None, max_length=200)
+    field_of_study: str | None = Field(default=None, max_length=200)
+    graduation_date: date | None = None
+
+
+class LanguageSubmit(BaseModel):
+    language: str | None = Field(default=None, max_length=50)
+    level: str | None = Field(default=None, max_length=50)
+
+
+class ApplicationSubmit(BaseModel):
+    """Payload único para registrar candidato + perfil + aplicación en una sola transacción."""
+    job_id: uuid.UUID
+    name: str = Field(..., max_length=100)
+    email: EmailStr
+    phone: str | None = Field(default=None, max_length=20)
+    location: str | None = Field(default=None, max_length=100)
+    experience: list[ExperienceSubmit] = []
+    education: list[EducationSubmit] = []
+    languages: list[LanguageSubmit] = []
 
 
 class ApplicationDecisionUpdate(BaseModel):

@@ -15,6 +15,7 @@ from modules.aplicaciones.schemas import (
     ApplicationDecisionUpdate,
     ApplicationFullResponse,
     ApplicationNotesUpdate,
+    ApplicationSubmit,
 )
 from modules.aplicaciones.service import ApplicationService
 from modules.ia.analyzer import analyze_application
@@ -53,6 +54,30 @@ async def list_applications(
         ai_decision=ai_decision,
         human_decision=human_decision,
     )
+
+
+@router.post(
+    "/submit",
+    response_model=ApplicationFullResponse,
+    status_code=http_status.HTTP_201_CREATED,
+)
+async def submit_application(
+    data: ApplicationSubmit,
+    background_tasks: BackgroundTasks,
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+) -> ApplicationFullResponse:
+    """Endpoint atómico: crea candidato + perfil + aplicación en una sola transacción."""
+    service = ApplicationService(db)
+    app = await service.submit_application(data)
+    await db.commit()
+    background_tasks.add_task(_run_ai_analysis, uuid.UUID(str(app.id)))
+    background_tasks.add_task(
+        send_application_confirmation,
+        candidate_email=app.candidate.email,
+        candidate_name=app.candidate.name,
+        job_title=app.job.title,
+    )
+    return app
 
 
 @router.post(

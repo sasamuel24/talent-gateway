@@ -747,97 +747,53 @@ const Apply = () => {
     setIsSubmitting(true);
     setSubmitError("");
     try {
-      // a) Crear candidato sin cv_url primero (necesitamos el ID para subir el archivo)
-      const cv_url: string | null = null;
-
-      // b) Build location string and create candidate
+      // 1) Enviar candidato + perfil + aplicación en una sola transacción atómica
       const locationParts = [ciudad, estado, pais].filter(Boolean);
       const location = locationParts.join(", ");
-      const candidateRes = await fetch(`${BASE_URL}/api/v1/candidatos/`, {
+
+      const submitRes = await fetch(`${BASE_URL}/api/v1/aplicaciones/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          job_id: job.id,
           name: `${firstName} ${lastName}`.trim(),
           email,
-          phone: telefono || undefined,
-          location: location || undefined,
-          cv_url: cv_url ?? null,
-        }),
-      });
-      if (!candidateRes.ok) throw new Error(await candidateRes.text());
-      const candidate = await candidateRes.json();
-      const candidateId: string = candidate.id;
-
-      // c) Subir PDF del CV a S3
-      if (cvFile) {
-        const formData = new FormData();
-        formData.append("file", cvFile);
-        const cvRes = await fetch(`${BASE_URL}/api/v1/candidatos/${candidateId}/cv`, {
-          method: "POST",
-          body: formData,
-        });
-        if (!cvRes.ok) {
-          console.warn("CV upload falló:", await cvRes.text());
-          // No bloqueamos el flujo si el CV falla — el candidato queda registrado igual
-        }
-      }
-
-      // e-f) Add experience entries
-      for (const exp of experiencias) {
-        const expRes = await fetch(`${BASE_URL}/api/v1/candidatos/${candidateId}/experience`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          phone: telefono || null,
+          location: location || null,
+          experience: experiencias.map((exp) => ({
             position: exp.puesto,
             company: exp.compania,
             start_date: exp.fechaInicio || null,
             end_date: exp.fechaFin || null,
             details: exp.detalles || null,
-          }),
-        });
-        if (!expRes.ok) throw new Error(await expRes.text());
-      }
-
-      // g) Add education entries
-      for (const edu of educaciones) {
-        const eduRes = await fetch(`${BASE_URL}/api/v1/candidatos/${candidateId}/education`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          })),
+          education: educaciones.map((edu) => ({
             degree: edu.grado || null,
             institution: edu.universidad || null,
             field_of_study: edu.estudios || null,
             graduation_date: edu.fechaTitulacion || null,
-          }),
-        });
-        if (!eduRes.ok) throw new Error(await eduRes.text());
-      }
-
-      // h) Add language entries
-      for (const idioma of idiomas) {
-        const langRes = await fetch(`${BASE_URL}/api/v1/candidatos/${candidateId}/languages`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          })),
+          languages: idiomas.map((idioma) => ({
             language: idioma.habilidad,
             level: idioma.nivel,
-          }),
-        });
-        if (!langRes.ok) throw new Error(await langRes.text());
-      }
-
-      // i) Create application
-      const appRes = await fetch(`${BASE_URL}/api/v1/aplicaciones`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          candidate_id: candidateId,
-          job_id: job.id,
+          })),
         }),
       });
-      if (!appRes.ok) throw new Error(await appRes.text());
+      if (!submitRes.ok) throw new Error(await submitRes.text());
+      const application = await submitRes.json();
+      const candidateId: string = application.candidate_id;
 
-      // j) Move to success step
+      // 2) Subir CV a S3 en segundo plano (best-effort, no bloquea el flujo)
+      if (cvFile) {
+        const formData = new FormData();
+        formData.append("file", cvFile);
+        fetch(`${BASE_URL}/api/v1/candidatos/${candidateId}/cv`, {
+          method: "POST",
+          body: formData,
+        }).catch((err) => console.warn("CV upload falló (non-blocking):", err));
+      }
+
+      // 3) Avanzar al paso de confirmación
       setStep(5);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {

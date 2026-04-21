@@ -12,7 +12,10 @@ from modules.aplicaciones.schemas import (
     ApplicationDecisionUpdate,
     ApplicationFullResponse,
     ApplicationNotesUpdate,
+    ApplicationSubmit,
 )
+from modules.candidatos.repository import CandidateRepository
+from db.models import CandidateExperience, CandidateEducation, CandidateLanguage
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +93,57 @@ class ApplicationService:
         })
 
     # ── Métodos públicos ─────────────────────────────────────────────────────
+
+    async def submit_application(self, data: ApplicationSubmit) -> ApplicationFullResponse:
+        """
+        Crea candidato + perfil + aplicación en una única transacción.
+        Si el candidato ya existe (por email), limpia el perfil anterior.
+        Si la aplicación ya existe (mismo candidato + job), la retorna sin duplicar.
+        """
+        candidate_repo = CandidateRepository(self.db)
+
+        # 1. Candidato (idempotente por email)
+        candidate = await candidate_repo.get_by_email(data.email)
+        if candidate is not None:
+            await candidate_repo.clear_profile_data(candidate.id)
+            for key, value in {"name": data.name, "phone": data.phone, "location": data.location}.items():
+                if value is not None:
+                    setattr(candidate, key, value)
+            await self.db.flush()
+        else:
+            candidate = await candidate_repo.create({
+                "name": data.name,
+                "email": data.email,
+                "phone": data.phone,
+                "location": data.location,
+            })
+
+        # 2. Experiencia
+        for exp in data.experience:
+            self.db.add(CandidateExperience(candidate_id=candidate.id, **exp.model_dump()))
+
+        # 3. Educación
+        for edu in data.education:
+            self.db.add(CandidateEducation(candidate_id=candidate.id, **edu.model_dump()))
+
+        # 4. Idiomas
+        for lang in data.languages:
+            self.db.add(CandidateLanguage(candidate_id=candidate.id, **lang.model_dump()))
+
+        await self.db.flush()
+
+        # 5. Aplicación (idempotente por candidate + job)
+        existing = await self.repository.get_by_candidate_and_job(candidate.id, data.job_id)
+        if existing is not None:
+            logger.info(
+                "Aplicacion ya existente para candidato=%s job=%s, retornando existente",
+                candidate.id, data.job_id,
+            )
+            return self._serialize(existing)
+
+        app = await self.repository.create({"candidate_id": candidate.id, "job_id": data.job_id})
+        logger.info("Aplicacion atomica creada: candidato=%s job=%s", candidate.id, data.job_id)
+        return self._serialize(app)
 
     async def list_applications(
         self,
