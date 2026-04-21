@@ -131,6 +131,43 @@
   }
 }
 
+/* ── Tiptap editor content styles ───────────────────────────────────────── */
+.tiptap {
+  outline: none;
+  min-height: inherit;
+}
+.tiptap p { margin: 0 0 0.5rem; }
+.tiptap p:last-child { margin-bottom: 0; }
+.tiptap h2 { font-size: 1.1rem; font-weight: 700; margin: 0.75rem 0 0.25rem; }
+.tiptap h3 { font-size: 1rem; font-weight: 600; margin: 0.5rem 0 0.2rem; }
+.tiptap ul { list-style-type: disc; padding-left: 1.4rem; margin: 0.4rem 0; }
+.tiptap ol { list-style-type: decimal; padding-left: 1.4rem; margin: 0.4rem 0; }
+.tiptap li { margin-bottom: 0.2rem; }
+.tiptap hr { border: none; border-top: 1px solid hsl(var(--border)); margin: 0.75rem 0; }
+.tiptap strong { font-weight: 700; }
+.tiptap em { font-style: italic; }
+.tiptap u { text-decoration: underline; }
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  height: 0;
+}
+
+/* ── Rich content render (JobDetail portal público) ─────────────────────── */
+.rich-content p { margin: 0 0 0.5rem; }
+.rich-content p:last-child { margin-bottom: 0; }
+.rich-content h2 { font-size: 1rem; font-weight: 700; margin: 0.75rem 0 0.25rem; color: hsl(var(--foreground)); }
+.rich-content h3 { font-size: 0.9rem; font-weight: 600; margin: 0.5rem 0 0.2rem; color: hsl(var(--foreground)); }
+.rich-content ul { list-style-type: disc; padding-left: 1.4rem; margin: 0.4rem 0; }
+.rich-content ol { list-style-type: decimal; padding-left: 1.4rem; margin: 0.4rem 0; }
+.rich-content li { margin-bottom: 0.2rem; }
+.rich-content hr { border: none; border-top: 1px solid hsl(var(--border)); margin: 0.75rem 0; }
+.rich-content strong { font-weight: 700; }
+.rich-content em { font-style: italic; }
+.rich-content u { text-decoration: underline; }
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

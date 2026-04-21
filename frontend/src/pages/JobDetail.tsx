@@ -150,7 +150,10 @@ const JobDetail = () => {
             <h2 className="text-base font-heading font-bold uppercase tracking-brand text-foreground mb-3">
               Nuestro Compromiso con la Calidad
             </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed font-body">{job.description}</p>
+            <div
+              className="text-sm text-muted-foreground leading-relaxed font-body rich-content"
+              dangerouslySetInnerHTML={{ __html: job.description }}
+            />
             <p className="text-sm text-foreground font-semibold font-body mt-4">
               ¡Muchas gracias por tu interés en la posición de{" "}
               <span className="text-primary">{job.title}</span> y querer formar parte de Café Quindío!

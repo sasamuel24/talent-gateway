@@ -7,6 +7,7 @@ import { Plus, Trash2, ArrowLeft, Save, Send, Brain, Loader2 } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/RichTextEditor";
 import {
   Card,
   CardContent,
@@ -46,7 +47,11 @@ const formSchema = z.object({
   status: z.enum(["borrador", "activa"]),
   description: z
     .string()
-    .min(50, "La descripción debe tener al menos 50 caracteres"),
+    .min(1, "La descripción es obligatoria")
+    .refine(
+      (val) => val.replace(/<[^>]*>/g, "").trim().length >= 50,
+      "La descripción debe tener al menos 50 caracteres"
+    ),
   requirements: z
     .array(z.object({ value: z.string().min(3, "Mínimo 3 caracteres") }))
     .min(1, "Agrega al menos un requisito"),
@@ -376,20 +381,22 @@ export default function AdminConvocatoriaForm() {
                 <FormField
                   control={form.control}
                   name="description"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <FormItem>
                       <FormLabel>Descripción del cargo</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="Describe el cargo, el equipo y el rol en pocas líneas..."
-                          className="min-h-[100px]"
-                          {...field}
+                        <RichTextEditor
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Describe el cargo, el equipo y el rol..."
+                          minHeight={180}
+                          error={!!fieldState.error}
                         />
                       </FormControl>
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center mt-1">
                         <FormMessage />
                         <span className="text-xs text-muted-foreground">
-                          {field.value.length} / mín. 50
+                          {field.value.replace(/<[^>]*>/g, "").length} / mín. 50
                         </span>
                       </div>
                     </FormItem>
