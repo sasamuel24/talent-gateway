@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import uuid
 
@@ -22,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class ApplicationService:
     def __init__(self, db: AsyncSession):
+        self.db = db
         self.repository = ApplicationRepository(db)
 
     # ── Serialización explícita ──────────────────────────────────────────────
