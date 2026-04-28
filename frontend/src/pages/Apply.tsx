@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useConvocatoria } from "@/hooks/useConvocatorias";
 import Layout from "@/components/Layout";
-import { Upload, X, Plus, Trash2, CheckCircle, FileText, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Upload, X, Plus, Trash2, CheckCircle, FileText, ChevronLeft, ChevronRight, Loader2, UserCheck } from "lucide-react";
+import { useCandidateAuth } from "@/contexts/CandidateAuthContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -141,13 +142,22 @@ interface Step1Props {
   email: string;
   setEmail: (v: string) => void;
   errors: Record<string, string>;
+  isLoggedIn: boolean;
 }
 
-const Step1 = ({ firstName, setFirstName, lastName, setLastName, email, setEmail, errors }: Step1Props) => (
+const Step1 = ({ firstName, setFirstName, lastName, setLastName, email, setEmail, errors, isLoggedIn }: Step1Props) => (
   <div className="space-y-6 animate-slide-up">
     {/* Información de contacto */}
     <div>
-      <h2 className="text-base font-heading font-bold text-foreground mb-4">Información de contacto</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-base font-heading font-bold text-foreground">Información de contacto</h2>
+        {isLoggedIn && (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-body font-semibold">
+            <UserCheck className="w-3.5 h-3.5" />
+            Sesión activa
+          </span>
+        )}
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <Field label="First Name" required error={errors.firstName}>
           <input
@@ -168,12 +178,19 @@ const Step1 = ({ firstName, setFirstName, lastName, setLastName, email, setEmail
       </div>
       <Field label="Correo electrónico" required error={errors.email}>
         <input
-          className={inputCls}
+          className={`${inputCls} ${isLoggedIn ? "bg-muted/50 text-muted-foreground cursor-not-allowed" : ""}`}
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => !isLoggedIn && setEmail(e.target.value)}
+          readOnly={isLoggedIn}
           placeholder=""
         />
+        {isLoggedIn && (
+          <p className="text-xs text-muted-foreground mt-1 font-body">
+            El correo está vinculado a tu cuenta. Tu postulación quedará guardada en{" "}
+            <Link to="/candidato/portal" className="text-primary hover:underline">Mi Portal</Link>.
+          </p>
+        )}
       </Field>
     </div>
 
@@ -524,9 +541,10 @@ interface Step5Props {
   jobTitle: string;
   candidateName: string;
   navigate: (path: string) => void;
+  isLoggedIn: boolean;
 }
 
-const Step5 = ({ jobId, jobTitle, candidateName, navigate }: Step5Props) => {
+const Step5 = ({ jobId, jobTitle, candidateName, navigate, isLoggedIn }: Step5Props) => {
   const firstName = candidateName.split(' ')[0];
 
   return (
@@ -619,21 +637,42 @@ const Step5 = ({ jobId, jobTitle, candidateName, navigate }: Step5Props) => {
 
       {/* ── CTAs ── */}
       <div
-        className="w-full max-w-sm flex flex-col sm:flex-row gap-3 animate-slide-up"
+        className="w-full max-w-sm flex flex-col gap-3 animate-slide-up"
         style={{ animationDelay: '0.65s', animationFillMode: 'both', opacity: 0 }}
       >
-        <button
-          onClick={() => navigate('/')}
-          className="flex-1 px-5 py-3 rounded-full bg-primary text-white text-sm font-body font-bold hover:bg-primary/90 transition-all duration-200 active:scale-95 shadow-md shadow-primary/20"
-        >
-          Explorar más vacantes
-        </button>
-        <Link
-          to={`/vacante/${jobId}`}
-          className="flex-1 px-5 py-3 rounded-full border border-border text-sm font-body font-medium text-foreground hover:border-primary hover:text-primary transition-all duration-200 active:scale-95 text-center"
-        >
-          Ver la vacante
-        </Link>
+        {isLoggedIn ? (
+          <>
+            <Link
+              to="/candidato/portal"
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary text-white text-sm font-body font-bold hover:bg-primary/90 transition-all duration-200 active:scale-95 shadow-md shadow-primary/20"
+            >
+              <UserCheck className="w-4 h-4" />
+              Ver mis postulaciones
+            </Link>
+            <button
+              onClick={() => navigate('/')}
+              className="px-5 py-3 rounded-full border border-border text-sm font-body font-medium text-foreground hover:border-primary hover:text-primary transition-all duration-200 active:scale-95"
+            >
+              Explorar más vacantes
+            </button>
+          </>
+        ) : (
+          <>
+            <Link
+              to="/candidato/registro"
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary text-white text-sm font-body font-bold hover:bg-primary/90 transition-all duration-200 active:scale-95 shadow-md shadow-primary/20"
+            >
+              <UserCheck className="w-4 h-4" />
+              Crear cuenta para dar seguimiento
+            </Link>
+            <button
+              onClick={() => navigate('/')}
+              className="px-5 py-3 rounded-full border border-border text-sm font-body font-medium text-foreground hover:border-primary hover:text-primary transition-all duration-200 active:scale-95"
+            >
+              Explorar más vacantes
+            </button>
+          </>
+        )}
       </div>
 
       {/* ── Footer branding ── */}
@@ -655,6 +694,8 @@ const Apply = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: job, isLoading, isError } = useConvocatoria(id);
+  const { candidate } = useCandidateAuth();
+  const isLoggedIn = !!candidate;
 
   // ── Step state ──
   const [step, setStep] = useState(1);
@@ -669,6 +710,16 @@ const Apply = () => {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [step1Errors, setStep1Errors] = useState<Record<string, string>>({});
+
+  // Pre-rellenar Step 1 con datos del candidato logueado
+  useEffect(() => {
+    if (candidate) {
+      const parts = candidate.name.trim().split(" ");
+      setFirstName(parts[0] ?? "");
+      setLastName(parts.slice(1).join(" ") || parts[0] ?? "");
+      setEmail(candidate.email);
+    }
+  }, [candidate]);
 
   // ── Step 2 ──
   const [privacidad, setPrivacidad] = useState<"si" | "no" | "">("");
@@ -957,6 +1008,7 @@ const Apply = () => {
                 email={email}
                 setEmail={setEmail}
                 errors={step1Errors}
+                isLoggedIn={isLoggedIn}
               />
             )}
             {step === 2 && (
@@ -1017,6 +1069,7 @@ const Apply = () => {
                 jobTitle={job.title}
                 candidateName={`${firstName} ${lastName}`.trim()}
                 navigate={navigate}
+                isLoggedIn={isLoggedIn}
               />
             )}
           </div>
