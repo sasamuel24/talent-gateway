@@ -1,8 +1,10 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Calendar, Briefcase, Share2, Bookmark, CheckCircle2, Loader2, Link2, Check } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Briefcase, Share2, CheckCircle2, Loader2, Link2, Check, ChevronRight } from "lucide-react";
 import { useConvocatoria, useIncrementViews } from "@/hooks/useConvocatorias";
 import Layout from "@/components/Layout";
 import { useEffect, useRef, useState } from "react";
+import { useCandidateAuth } from "@/contexts/CandidateAuthContext";
+import { useCandidateApplications } from "@/hooks/useCandidatePortal";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -10,6 +12,19 @@ function formatDate(dateStr: string | null): string {
   if (isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
+
+const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
+  nuevo:      { bg: "bg-gray-100",  text: "text-gray-600",   dot: "bg-gray-400" },
+  revisado:   { bg: "bg-yellow-50", text: "text-yellow-700", dot: "bg-yellow-400" },
+  entrevista: { bg: "bg-blue-50",   text: "text-blue-700",   dot: "bg-blue-400" },
+  aprobado:   { bg: "bg-green-50",  text: "text-green-700",  dot: "bg-green-500" },
+  rechazado:  { bg: "bg-red-50",    text: "text-red-600",    dot: "bg-red-400" },
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  nuevo: "En revisión", revisado: "En evaluación",
+  entrevista: "Citado a entrevista", aprobado: "Seleccionado", rechazado: "Proceso cerrado",
+};
 
 const JobDetail = () => {
   const { id } = useParams();
@@ -19,6 +34,10 @@ const JobDetail = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
+
+  const { candidate } = useCandidateAuth();
+  const { data: myApplications } = useCandidateApplications(!!candidate);
+  const myApplication = myApplications?.find((a) => a.job_id === id);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -124,12 +143,23 @@ const JobDetail = () => {
 
           {/* Action buttons */}
           <div className="flex flex-wrap items-center gap-3 mt-5">
-            <button
-              onClick={() => navigate(`/vacante/${job.id}/aplicar`)}
-              className="inline-flex items-center px-6 py-2.5 bg-white text-primary text-xs font-heading font-bold uppercase tracking-brand rounded-full hover:bg-white/90 transition-all duration-200 active:scale-95 shadow-sm"
-            >
-              Postularme ahora
-            </button>
+            {myApplication ? (
+              <Link
+                to="/candidato/portal"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-white/20 border border-white/40 text-white text-xs font-heading font-bold uppercase tracking-brand rounded-full hover:bg-white/30 transition-all duration-200 active:scale-95"
+              >
+                <span className={`w-2 h-2 rounded-full ${STATUS_STYLES[myApplication.status_key]?.dot ?? "bg-white"}`} />
+                {STATUS_LABELS[myApplication.status_key] ?? myApplication.status_label}
+                <ChevronRight className="h-3.5 w-3.5 opacity-70" />
+              </Link>
+            ) : (
+              <button
+                onClick={() => navigate(`/vacante/${job.id}/aplicar`)}
+                className="inline-flex items-center px-6 py-2.5 bg-white text-primary text-xs font-heading font-bold uppercase tracking-brand rounded-full hover:bg-white/90 transition-all duration-200 active:scale-95 shadow-sm"
+              >
+                Postularme ahora
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -221,12 +251,23 @@ const JobDetail = () => {
 
         {/* Bottom CTA */}
         <div className="flex flex-wrap items-center gap-3 pt-6 border-t border-border">
-          <button
-            onClick={() => navigate(`/vacante/${job.id}/aplicar`)}
-            className="inline-flex items-center px-6 py-2.5 bg-primary text-white text-xs font-heading font-bold uppercase tracking-brand rounded-full hover:bg-primary/90 transition-all duration-200 active:scale-95 shadow-sm"
-          >
-            Postularme ahora
-          </button>
+          {myApplication ? (
+            <Link
+              to="/candidato/portal"
+              className={`inline-flex items-center gap-2 px-6 py-2.5 text-xs font-heading font-bold uppercase tracking-brand rounded-full transition-all duration-200 active:scale-95 shadow-sm ${STATUS_STYLES[myApplication.status_key]?.bg ?? "bg-muted"} ${STATUS_STYLES[myApplication.status_key]?.text ?? "text-foreground"} border border-current/20`}
+            >
+              <span className={`w-2 h-2 rounded-full ${STATUS_STYLES[myApplication.status_key]?.dot ?? "bg-gray-400"}`} />
+              {STATUS_LABELS[myApplication.status_key] ?? myApplication.status_label}
+              <ChevronRight className="h-3.5 w-3.5 opacity-70" />
+            </Link>
+          ) : (
+            <button
+              onClick={() => navigate(`/vacante/${job.id}/aplicar`)}
+              className="inline-flex items-center px-6 py-2.5 bg-primary text-white text-xs font-heading font-bold uppercase tracking-brand rounded-full hover:bg-primary/90 transition-all duration-200 active:scale-95 shadow-sm"
+            >
+              Postularme ahora
+            </button>
+          )}
           <div className="relative" ref={shareRef}>
             <button
               onClick={handleShare}
@@ -293,12 +334,22 @@ const JobDetail = () => {
           <p className="text-xs font-body font-semibold text-foreground truncate">{job.title}</p>
           <p className="text-[11px] font-body text-muted-foreground">{job.city?.name ?? job.location ?? "—"}</p>
         </div>
-        <button
-          onClick={() => navigate(`/vacante/${job.id}/aplicar`)}
-          className="shrink-0 px-5 py-2.5 bg-primary text-white text-xs font-heading font-bold uppercase tracking-wide rounded-full hover:bg-primary/90 active:scale-95 transition-all duration-200 shadow-sm shadow-primary/20"
-        >
-          Postularme
-        </button>
+        {myApplication ? (
+          <Link
+            to="/candidato/portal"
+            className={`shrink-0 inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-heading font-bold uppercase tracking-wide rounded-full active:scale-95 transition-all duration-200 ${STATUS_STYLES[myApplication.status_key]?.bg ?? "bg-muted"} ${STATUS_STYLES[myApplication.status_key]?.text ?? "text-foreground"}`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${STATUS_STYLES[myApplication.status_key]?.dot ?? "bg-gray-400"}`} />
+            {STATUS_LABELS[myApplication.status_key] ?? myApplication.status_label}
+          </Link>
+        ) : (
+          <button
+            onClick={() => navigate(`/vacante/${job.id}/aplicar`)}
+            className="shrink-0 px-5 py-2.5 bg-primary text-white text-xs font-heading font-bold uppercase tracking-wide rounded-full hover:bg-primary/90 active:scale-95 transition-all duration-200 shadow-sm shadow-primary/20"
+          >
+            Postularme
+          </button>
+        )}
       </div>
     </Layout>
   );
