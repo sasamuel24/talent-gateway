@@ -716,7 +716,7 @@ const Apply = () => {
     if (candidate) {
       const parts = candidate.name.trim().split(" ");
       setFirstName(parts[0] ?? "");
-      setLastName(parts.slice(1).join(" ") || parts[0] ?? "");
+      setLastName(parts.slice(1).join(" ") || (parts[0] ?? ""));
       setEmail(candidate.email);
     }
   }, [candidate]);

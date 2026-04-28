@@ -56,7 +56,14 @@
       "Bash(find /c/desarollos/talent-gateway/frontend -maxdepth 2 -type f -name *.tsx -o -name *.ts)",
       "Bash(xargs grep:*)",
       "Bash(grep -r \"sendgrid\\\\|smtplib\\\\|email\\\\|mail\" /c/desarollos/talent-gateway/backend --include=*.py)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Skill(aws-expert)",
+      "Bash(/c/Program Files/PostgreSQL/18/bin/psql.exe *)",
+      "PowerShell(& \"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -c \"\\\\l\" 2>&1)",
+      "Bash(git rm *)",
+      "Bash(py -m uvicorn main:app --host 0.0.0.0 --port 8080 --reload)",
+      "Read(//tmp/**)",
+      "Bash(bun run *)"
     ]
   }
 }
