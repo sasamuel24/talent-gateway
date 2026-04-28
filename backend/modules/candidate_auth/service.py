@@ -23,19 +23,32 @@ class CandidateAuthService:
 
     async def register(self, data: CandidateRegisterRequest) -> CandidateLoginResponse:
         existing = await self.repo.get_by_email(data.email)
+
         if existing is not None:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Ya existe una cuenta con ese correo electrónico",
+            if existing.password_hash is not None:
+                # Ya tiene cuenta activa
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Ya existe una cuenta con ese correo electrónico",
+                )
+            # Candidato aplicó antes de registrarse → vincular cuenta al registro existente
+            candidate = await self.repo.link_account(
+                candidate=existing,
+                name=data.name,
+                password_hash=hash_password(data.password),
+                phone=data.phone,
             )
-        candidate = await self.repo.create(
-            name=data.name,
-            email=data.email,
-            password_hash=hash_password(data.password),
-            phone=data.phone,
-        )
+            logger.info("Cuenta vinculada a candidato existente: %s", candidate.id)
+        else:
+            candidate = await self.repo.create(
+                name=data.name,
+                email=data.email,
+                password_hash=hash_password(data.password),
+                phone=data.phone,
+            )
+            logger.info("Candidato registrado: %s", candidate.id)
+
         token = create_access_token(subject=str(candidate.id), scope="candidate")
-        logger.info("Candidato registrado: %s", candidate.id)
         return CandidateLoginResponse(
             access_token=token,
             candidate_id=str(candidate.id),

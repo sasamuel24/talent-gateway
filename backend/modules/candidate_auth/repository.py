@@ -37,3 +37,19 @@ class CandidateAuthRepository:
         await self.db.commit()
         await self.db.refresh(candidate)
         return candidate
+
+    async def link_account(
+        self,
+        candidate: Candidate,
+        name: str,
+        password_hash: str,
+        phone: str | None,
+    ) -> Candidate:
+        """Vincula credenciales a un candidato que ya existe (aplicó sin cuenta)."""
+        candidate.password_hash = password_hash
+        candidate.name = name
+        if phone:
+            candidate.phone = phone
+        await self.db.commit()
+        await self.db.refresh(candidate)
+        return candidate
