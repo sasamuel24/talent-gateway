@@ -313,19 +313,6 @@ const JobDetail = () => {
           </div>
         </div>
 
-        {/* Talent community */}
-        <div className="mt-10 bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-6 sm:p-8 text-white">
-          <h3 className="text-base font-heading font-bold uppercase tracking-brand mb-2">
-            Únete a nuestra comunidad de talento
-          </h3>
-          <p className="text-sm text-white/75 mb-5 font-body max-w-lg">
-            ¿No encontraste la vacante ideal? Déjanos tu CV y te contactaremos cuando
-            surjan nuevas oportunidades que se ajusten a tu perfil.
-          </p>
-          <button className="inline-flex items-center px-6 py-2.5 bg-white text-primary text-xs font-heading font-bold uppercase tracking-brand rounded-full hover:bg-white/90 transition-all duration-200 active:scale-95">
-            Sube tu CV
-          </button>
-        </div>
       </div>
 
       {/* Sticky bottom CTA — solo móvil */}
