@@ -7,8 +7,11 @@ import { useConvocatorias } from "@/hooks/useConvocatorias";
 import { useCiudades, useTiposCargo, useAreasAdmin } from "@/hooks/useCatalogs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SlidersHorizontal } from "lucide-react";
+import { useCandidateAuth } from "@/contexts/CandidateAuthContext";
+import { Link } from "react-router-dom";
 
 const Index = () => {
+  const { candidate } = useCandidateAuth();
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -114,6 +117,26 @@ const Index = () => {
           </div>
         </div>
       </div>
+      {/* Comunidad de talento — solo visible sin sesión */}
+      {!candidate && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+          <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-6 sm:p-8 text-white">
+            <h3 className="text-base font-heading font-bold uppercase tracking-brand mb-2">
+              Únete a nuestra comunidad de talento
+            </h3>
+            <p className="text-sm text-white/75 mb-5 font-body max-w-lg">
+              ¿No encontraste la vacante ideal? Crea tu cuenta y te contactaremos cuando
+              surjan nuevas oportunidades que se ajusten a tu perfil.
+            </p>
+            <Link
+              to="/candidato/registro"
+              className="inline-flex items-center px-6 py-2.5 bg-white text-primary text-xs font-heading font-bold uppercase tracking-brand rounded-full hover:bg-white/90 transition-all duration-200 active:scale-95"
+            >
+              Crear cuenta
+            </Link>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
