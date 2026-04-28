@@ -315,6 +315,27 @@ const JobDetail = () => {
 
       </div>
 
+      {/* Comunidad de talento — solo sin sesión */}
+      {!candidate && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+          <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-6 sm:p-8 text-white">
+            <h3 className="text-base font-heading font-bold uppercase tracking-brand mb-2">
+              Únete a nuestra comunidad de talento
+            </h3>
+            <p className="text-sm text-white/75 mb-5 font-body max-w-lg">
+              ¿No encontraste la vacante ideal? Crea tu cuenta y te contactaremos cuando
+              surjan nuevas oportunidades que se ajusten a tu perfil.
+            </p>
+            <Link
+              to="/candidato/registro"
+              className="inline-flex items-center px-6 py-2.5 bg-white text-primary text-xs font-heading font-bold uppercase tracking-brand rounded-full hover:bg-white/90 transition-all duration-200 active:scale-95"
+            >
+              Crear cuenta
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Sticky bottom CTA — solo móvil */}
       <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-t border-border px-4 py-3 flex items-center gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
         <div className="flex-1 min-w-0">
