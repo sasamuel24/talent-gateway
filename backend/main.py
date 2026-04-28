@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from modules.auth.router import router as auth_router
+from modules.candidate_auth.router import router as candidate_auth_router
+from modules.candidate_portal.router import router as candidate_portal_router
 from modules.convocatorias.router import router as convocatorias_router
 from modules.candidatos.router import router as candidatos_router
 from modules.candidatos.public_router import public_router as candidatos_public_router
@@ -34,6 +36,8 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(candidate_auth_router)
+app.include_router(candidate_portal_router)
 app.include_router(usuarios_router)
 app.include_router(convocatorias_router)
 app.include_router(candidatos_public_router)

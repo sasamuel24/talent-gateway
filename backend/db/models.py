@@ -186,6 +186,7 @@ class Candidate(Base):
     phone: Mapped[str | None] = mapped_column(String(20))
     location: Mapped[str | None] = mapped_column(String(100))
     cv_url: Mapped[str | None] = mapped_column(String(500))
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), server_default=func.now(), nullable=False
     )
