@@ -1,7 +1,8 @@
-import { Menu, X } from "lucide-react";
+import { Menu, User, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "@/assets/logo-cafe-quindio.png";
+import { useCandidateAuth } from "@/contexts/CandidateAuthContext";
 
 const navLinks = [
   { label: "Inicio", href: "/", internal: true },
@@ -20,6 +21,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { candidate } = useCandidateAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -76,6 +78,24 @@ const Navbar = () => {
 
           {/* CTA + hamburger */}
           <div className="flex items-center gap-3">
+            {/* Candidate portal button */}
+            {candidate ? (
+              <Link
+                to="/candidato/portal"
+                className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 border border-primary text-primary text-xs font-heading font-bold uppercase tracking-brand rounded-full hover:bg-primary hover:text-white transition-all duration-200 active:scale-95"
+              >
+                <User className="h-3.5 w-3.5" />
+                Mi Portal
+              </Link>
+            ) : (
+              <Link
+                to="/candidato/login"
+                className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 border border-border text-foreground/70 text-xs font-heading font-bold uppercase tracking-brand rounded-full hover:border-primary hover:text-primary transition-all duration-200 active:scale-95"
+              >
+                <User className="h-3.5 w-3.5" />
+                Ingresar
+              </Link>
+            )}
             <a
               href="https://www.cafequindio.com.co"
               target="_blank"
@@ -120,7 +140,26 @@ const Navbar = () => {
           </div>
 
           {/* CTA */}
-          <div className="px-6 pb-6">
+          <div className="px-6 pb-6 space-y-3">
+            {candidate ? (
+              <Link
+                to="/candidato/portal"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center gap-2 w-full py-3.5 border border-primary text-primary text-xs font-heading font-bold uppercase tracking-brand rounded-xl hover:bg-primary hover:text-white active:scale-95 transition-all duration-200"
+              >
+                <User className="h-4 w-4" />
+                Mi Portal
+              </Link>
+            ) : (
+              <Link
+                to="/candidato/login"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center gap-2 w-full py-3.5 border border-border text-foreground/70 text-xs font-heading font-bold uppercase tracking-brand rounded-xl hover:border-primary hover:text-primary active:scale-95 transition-all duration-200"
+              >
+                <User className="h-4 w-4" />
+                Ingresar al portal
+              </Link>
+            )}
             <a
               href="https://www.cafequindio.com.co"
               target="_blank"

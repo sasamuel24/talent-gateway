@@ -4,7 +4,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CandidateAuthProvider } from "@/contexts/CandidateAuthContext";
 import ProtectedRoute from "@/components/admin/ProtectedRoute";
+import CandidateProtectedRoute from "@/components/candidate/CandidateProtectedRoute";
 import Index from "./pages/Index.tsx";
 import JobDetail from "./pages/JobDetail.tsx";
 import Apply from "./pages/Apply.tsx";
@@ -16,6 +18,9 @@ import AdminConvocatoriaForm from "./pages/admin/AdminConvocatoriaForm";
 import AdminCandidatos from "./pages/admin/AdminCandidatos";
 import AdminIA from "./pages/admin/AdminIA";
 import AdminCatalogos from "@/pages/admin/AdminCatalogos";
+import CandidatoLogin from "./pages/candidato/CandidatoLogin";
+import CandidatoRegister from "./pages/candidato/CandidatoRegister";
+import CandidatoPortal from "./pages/candidato/CandidatoPortal";
 
 const queryClient = new QueryClient();
 
@@ -30,29 +35,40 @@ const App = () => (
           useNavigate() internally (required for the logout redirect).
         */}
         <AuthProvider>
-          <Routes>
-            {/* ── Public routes ── */}
-            <Route path="/" element={<Index />} />
-            <Route path="/vacante/:id" element={<JobDetail />} />
-            <Route path="/vacante/:id/aplicar" element={<Apply />} />
+          <CandidateAuthProvider>
+            <Routes>
+              {/* ── Public routes ── */}
+              <Route path="/" element={<Index />} />
+              <Route path="/vacante/:id" element={<JobDetail />} />
+              <Route path="/vacante/:id/aplicar" element={<Apply />} />
 
-            {/* ── Admin login (public) ── */}
-            <Route path="/admin/login" element={<AdminLogin />} />
+              {/* ── Candidate auth (public) ── */}
+              <Route path="/candidato/login" element={<CandidatoLogin />} />
+              <Route path="/candidato/registro" element={<CandidatoRegister />} />
 
-            {/* ── Protected admin routes ── */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/convocatorias" element={<AdminConvocatorias />} />
-              <Route path="/admin/convocatorias/nueva" element={<AdminConvocatoriaForm />} />
-              <Route path="/admin/convocatorias/:id/editar" element={<AdminConvocatoriaForm />} />
-              <Route path="/admin/candidatos" element={<AdminCandidatos />} />
-              <Route path="/admin/ia" element={<AdminIA />} />
-              <Route path="/admin/catalogos" element={<AdminCatalogos />} />
-            </Route>
+              {/* ── Protected candidate routes ── */}
+              <Route element={<CandidateProtectedRoute />}>
+                <Route path="/candidato/portal" element={<CandidatoPortal />} />
+              </Route>
 
-            {/* ── 404 ── */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              {/* ── Admin login (public) ── */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+
+              {/* ── Protected admin routes ── */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/convocatorias" element={<AdminConvocatorias />} />
+                <Route path="/admin/convocatorias/nueva" element={<AdminConvocatoriaForm />} />
+                <Route path="/admin/convocatorias/:id/editar" element={<AdminConvocatoriaForm />} />
+                <Route path="/admin/candidatos" element={<AdminCandidatos />} />
+                <Route path="/admin/ia" element={<AdminIA />} />
+                <Route path="/admin/catalogos" element={<AdminCatalogos />} />
+              </Route>
+
+              {/* ── 404 ── */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </CandidateAuthProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
